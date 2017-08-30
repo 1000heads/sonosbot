@@ -304,12 +304,11 @@ function _increaseVolume(input, channel) {
 
     var vol = input[1];
     sonos.getVolume(function(err, currentVol) {
-        if(isNaN(vol)) {
+        if(isNaN(currentVol)) {
             slack.sendMessage('Nope.', channel.id);
             return;
         } else {
-            vol = Number(vol) + Number(currentVol);
-            console.log(vol);
+            vol = Number(currentVol) + 10;
             if(vol > maxVolume) {
                 slack.sendMessage('You also could have tinnitus _(say: tih-neye-tus)_', channel.id);
             } else {
@@ -321,23 +320,21 @@ function _increaseVolume(input, channel) {
     });
 }
 
-function _decreaseVolume(input, channel) {
+function _decreaseVolume(channel) {
     if(channel.name !== adminChannel){
         console.log("Only admins are allowed for this action!")
         slack.sendMessage("Only admins are allowed for this action!", channel.id)
         return
     }
 
-    var vol = input[1];
+    // var vol = input[1];
     sonos.getVolume(function(err, currentVol) {
-        console.log(currentVol);
-        if(isNaN(vol)) {
+        if(isNaN(currentVol)) {
             slack.sendMessage('Nope.', channel.id);
             return;
         } else {
-            if(vol > 0) {
-                vol = Number(currentVol) - Number(vol);
-                console.log(vol);
+            if(currentVol > 0) {
+                vol = Number(currentVol) - 10;
                 sonos.setVolume(vol, function(err, data) {
                     _getVolume(channel);
                 });
