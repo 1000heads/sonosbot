@@ -21,7 +21,6 @@ config.argv()
 var adminChannel = config.get('adminChannel');
 var standardChannel = config.get('standardChannel');
 var sonos = new Sonos.Sonos(config.get('sonos'));
-var sonos2 = new Sonos.Sonos(config.get('sonos2'));
 var token = config.get('token');
 var maxVolume = config.get('maxVolume');
 var market = config.get('market');
@@ -193,9 +192,11 @@ slack.on(RTM_EVENTS.MESSAGE, function(message) {
                 break;
                 case 'dong':
                 case 'gong':
+                case ':hankey:':
                     _gong(channel, userName);
                 break;
                 case 'gongcheck':
+                case 'dongcheck':
                     _gongcheck(channel, userName);
                 break;
                 case 'ungong':
@@ -220,6 +221,9 @@ slack.on(RTM_EVENTS.MESSAGE, function(message) {
                 break;
                 case 'volume':
                     _getVolume(channel);
+                break;
+                case 'volup':
+                    _increaseVolume(channel);
                 break;
                 case 'setvolume':
                     _setVolume(input, channel);
@@ -278,11 +282,6 @@ function _getVolume(channel) {
         console.log(err, vol);
         slack.sendMessage('Vol is Light Side is ' + vol + ' deadly dB _(ddB)_', channel.id);
     });
-
-    sonos2.getVolume(function(err, vol) {
-        console.log(err, vol);
-        slack.sendMessage('Vol on Dark Side is ' + vol + ' deadly dB _(ddB)_', channel.id);
-    });
 }
 
 function _setVolume(input, channel) {
@@ -304,9 +303,6 @@ function _setVolume(input, channel) {
             slack.sendMessage('You also could have tinnitus _(say: tih-neye-tus)_', channel.id);
         } else {
             sonos.setVolume(vol, function(err, data) {
-                _getVolume(channel);
-            });
-            sonos2.setVolume(vol, function(err, data) {
                 _getVolume(channel);
             });
         }
@@ -610,7 +606,7 @@ function _currentTrack(channel, cb) {
             psec = psec.length == 2 ? psec : '0'+psec;
 
 
-            var message = 'We´re rocking out to *' + track.artist + '* - *' + track.title + '* ('+pmin+':'+psec+'/'+fmin+':'+fsec+')';
+            var message = 'We´re currently listening to *' + track.artist + '* by *' + track.title + '* ('+pmin+':'+psec+'/'+fmin+':'+fsec+')';
             slack.sendMessage(message, channel.id);
         }
     });
