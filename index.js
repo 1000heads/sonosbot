@@ -218,7 +218,7 @@ slack.on(RTM_EVENTS.MESSAGE, function(message) {
                 case 'sonos status':
                     _status(channel);
                 break;
-                case 'sonos  blacklist':
+                case 'sonos blacklist':
                     _blacklist(input, channel);
                 break;
                 default:
@@ -494,8 +494,8 @@ function _help(input, channel) {
     '`sonos volume` : view current volume\n' +
     '`sonos flush` : flush the current queue\n' +
     '`sonos setvolume` _number_ : sets volume\n' +
-    '`sonos volumeup` _number_ : increases volume\n' +
-    '`sonos volumedown` _number_ : increases volume\n' +
+    '`sonos volumeup` : increases volume\n' +
+    '`sonos volumedown` : increases volume\n' +
     '`sonos play` : play track\n' +
     '`sonos stop` : stop life\n' +
     '`sonos pause` : pause life\n' +
@@ -519,7 +519,7 @@ function _play(input, channel) {
         sonos.play(function (err, playing) {
              console.log([err, playing])
                 if(playing) {
-                slack.sendMessage("WHHHHHYYYYYY? Just do an *add* and the music should start..  you´re making me confused....", channel.id);
+                    slack.sendMessage("Now playing the music", channel.id);
                 }
             });
     });
