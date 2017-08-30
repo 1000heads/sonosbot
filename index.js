@@ -135,90 +135,90 @@ slack.on(RTM_EVENTS.MESSAGE, function(message) {
             return false;
         } else {
             var input = text.split(' ');
-            var term = input[0].toLowerCase();
+            var term = (input[0].toLowerCase() === 'sonos') ? message.text.toLowerCase() : input[0].toLowerCase();
             console.log('term', term);
             switch(term) {
-                case 'add':
+                case 'sonos add':
                     _add(input, channel);
                 break;
-                case 'search':
+                case 'sonos search':
                     _search(input, channel);
                 break;
-                case 'append':
+                case 'sonos append':
                     _append(input, channel);
                 break;
-                case 'next':
+                case 'sonos next':
                     _nextTrack(channel);
                 break;
-                case 'gongPlay':
+                case 'sonos gongPlay':
                     _gongPlay(input, channel);
                 break;
-                case 'stop':
+                case 'sonos stop':
                     _stop(input, channel);
                 break;
-                case 'flush':
+                case 'sonos flush':
                     _flush(input, channel);
                 break;
-                case 'play':
+                case 'sonos play':
                     _play(input, channel);
                 break;
-                case 'pause':
+                case 'sonos pause':
                     _pause(input, channel);
                 break;
-                case 'playpause':
+                case 'sonos playpause':
                     _playpause(input, channel);
                 break;
-                case 'help':
+                case 'sonos help':
                     _help(input, channel);
                 break;
-                case 'dong':
-                case 'gong':
+                case 'sonos dong':
+                case 'sonos gong':
                 case ':hankey:':
                     _gong(channel, userName);
                 break;
-                case 'gongcheck':
-                case 'dongcheck':
+                case 'sonos gongcheck':
+                case 'sonos dongcheck':
                     _gongcheck(channel, userName);
                 break;
-                case 'ungong':
+                case 'sonos ungong':
                     _ungong(channel, userName);
                 break;
-                case 'say':
+                case 'sonos say':
                     // _say(input, channel);
                 break;
-                case 'current':
+                case 'sonos current':
                     _currentTrack(channel);
                 break;
-                case 'vote':
+                case 'sonos vote':
                     _vote(text, channel, userName);
                 break;
-                case 'previous':
+                case 'sonos previous':
                     _previous(input, channel);
                 break;
-                case 'list':
-                case 'ls':
-                case 'playlist':
+                case 'sonos list':
+                case 'sonos ls':
+                case 'sonos playlist':
                     _showQueue(channel);
                 break;
-                case 'volume':
+                case 'sonos volume':
                     _getVolume(channel);
                 break;
-                case 'volup':
+                case 'sonos volup':
                     _increaseVolume(channel);
                 break;
-                case 'setvolume':
+                case 'sonos setvolume':
                     _setVolume(input, channel);
                 break;
-                case 'volumeup':
+                case 'sonos volumeup':
                     _increaseVolume(input, channel);
                 break;
-                case 'volumedown':
+                case 'sonos volumedown':
                     _decreaseVolume(input, channel);
                 break;
-                case 'status':
+                case 'sonos status':
                     _status(channel);
                 break;
-                case 'blacklist':
+                case 'sonos  blacklist':
                     _blacklist(input, channel);
                 break;
                 default:
@@ -481,30 +481,30 @@ function _previous(input, channel) {
 function _help(input, channel) {
     var message = 'Current commands!\n' +
     '=====================\n' +
-    '`current` : list current track\n' +
-    '`search` _text_ : search for a track, does NOT add it to the queue\n' +
-    '`gong` : The current track is bad! Vote for skipping this track\n' +
-    '`gongcheck` : How many gong votes there are currently, as well as who has GONGED.\n' +
-    '`vote` _exactSongTitle_ : Vote for a specific song title in the queue.\n' +
-    '`list` : list current queue\n' +
+    '`sonos current` : list current track\n' +
+    '`sonos search` _text_ : search for a track, does NOT add it to the queue\n' +
+    '`sonos gong` : The current track is bad! Vote for skipping this track\n' +
+    '`sonos gongcheck` : How many gong votes there are currently, as well as who has GONGED.\n' +
+    '`sonos vote` _exactSongTitle_ : Vote for a specific song title in the queue.\n' +
+    '`sonos list` : list current queue\n' +
     '------ ADMIN FUNCTIONS ------\n' +
-    '`status` : show current status of Sonos\n' +
-    '`add` _text_ : Add song to the queue and start playing if idle.\n' +
-    '`append` _text_ : Append a song to the previous playlist and start playing the same list again.\n' +
-    '`volume` : view current volume\n' +
-    '`flush` : flush the current queue\n' +
-    '`setvolume` _number_ : sets volume\n' +
-    '`volumeup` _number_ : increases volume\n' +
-    '`volumedown` _number_ : increases volume\n' +
-    '`play` : play track\n' +
-    '`stop` : stop life\n' +
-    '`pause` : pause life\n' +
-    '`playpause` : resume after pause\n' +
-    '`next` : play next track\n' +
-    '`previous` : play previous track\n' +
-    '`blacklist` : show users on blacklist\n' +
-    '`blacklist add @username` : add `@username` to the blacklist\n' +
-    '`blacklist del @username` : remove `@username` from the blacklist\n' +
+    '`sonos status` : show current status of Sonos\n' +
+    '`sonos add` _text_ : Add song to the queue and start playing if idle.\n' +
+    '`sonos append` _text_ : Append a song to the previous playlist and start playing the same list again.\n' +
+    '`sonos volume` : view current volume\n' +
+    '`sonos flush` : flush the current queue\n' +
+    '`sonos setvolume` _number_ : sets volume\n' +
+    '`sonos volumeup` _number_ : increases volume\n' +
+    '`sonos volumedown` _number_ : increases volume\n' +
+    '`sonos play` : play track\n' +
+    '`sonos stop` : stop life\n' +
+    '`sonos pause` : pause life\n' +
+    '`sonos playpause` : resume after pause\n' +
+    '`sonos next` : play next track\n' +
+    '`sonos previous` : play previous track\n' +
+    '`sonos blacklist` : show users on blacklist\n' +
+    '`sonos blacklist add @username` : add `@username` to the blacklist\n' +
+    '`sonos blacklist del @username` : remove `@username` from the blacklist\n' +
     '=====================\n'
     slack.sendMessage(message, channel.id);
 }
