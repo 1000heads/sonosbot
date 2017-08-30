@@ -497,6 +497,8 @@ function _help(input, channel) {
     '`volume` : view current volume\n' +
     '`flush` : flush the current queue\n' +
     '`setvolume` _number_ : sets volume\n' +
+    '`volumeup` _number_ : increases volume\n' +
+    '`volumedown` _number_ : increases volume\n' +
     '`play` : play track\n' +
     '`stop` : stop life\n' +
     '`pause` : pause life\n' +
