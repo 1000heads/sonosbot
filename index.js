@@ -21,7 +21,6 @@ config.argv()
 var adminChannel = config.get('adminChannel');
 var standardChannel = config.get('standardChannel');
 var sonos = new Sonos.Sonos(config.get('sonos'));
-var sonos2 = new Sonos.Sonos(config.get('sonos2'));
 var token = config.get('token');
 var maxVolume = config.get('maxVolume');
 var market = config.get('market');
@@ -30,6 +29,8 @@ var apiKey = config.get('apiKey');
 if(!Array.isArray(blacklist)) {
     blacklist = blacklist.replace(/\s*(,|^|$)\s*/g, "$1").split(/\s*,\s*/);
 }
+
+var devices = [];
 
 var gongCounter = 0;
 var gongLimit = 3;
@@ -86,49 +87,28 @@ slack.on('open', function() {
         return _results;
     })();
 
-    var devices = [];
-
-    Sonos.search(function(device) {
-        // device is an instance of sonos.Sonos
-        devices.push(device);
-        // console.log(device);
-        // device.currentTrack(console.log);
-    });
-
-    console.log(devices);
-
     // Sonos.search({timeout: 2000}, function (device, model) {
     //     var data = {ip: device.host, port: device.port, model: model}
 
     //     device.getZoneAttrs(function (err, attrs) {
-    //       if (!err) {
-    //         _.extend(data, attrs)
-    //       }
-    //       device.getZoneInfo(function (err, info) {
     //         if (!err) {
-    //           _.extend(data, info)
+    //         _.extend(data, attrs)
+    //         }
+    //         device.getZoneInfo(function (err, info) {
+    //         if (!err) {
+    //             _.extend(data, info)
     //         }
     //         device.getTopology(function (err, info) {
-    //           if (!err) {
+    //             if (!err) {
     //             info.zones.forEach(function (group) {
-    //               if (group.location === 'http://' + data.ip + ':' + data.port + '/xml/device_description.xml') {
+    //                 if (group.location === 'http://' + data.ip + ':' + data.port + '/xml/device_description.xml') {
     //                 _.extend(data, group)
-    //               }
+    //                 }
     //             })
-    //           }
-    //           devices.push(data)
+    //             }
+    //             devices.push({ device: new Sonos.Sonos(data.ip, 1400), name: data.name });
     //         })
-    //       })
-    //     })
-    // })
-
-    // getZones(devices).forEach(function (zone) {
-    //     var coordinator = getZoneCoordinator(zone, devices)
-    //     if (coordinator !== undefined) {
-    //       console.log(zone + ' (' + coordinator.ip + ':' + coordinator.port + ')')
-    //     }
-    //     getZoneDevices(zone, devices).forEach(function (device) {
-    //       console.log('\t' + JSON.stringify(device))
+    //         })
     //     })
     // });
 
@@ -224,6 +204,12 @@ slack.on(RTM_EVENTS.MESSAGE, function(message) {
                 case 'setvolume':
                     _setVolume(input, channel);
                 break;
+                case 'volumeup':
+                    _increaseVolume(input, channel);
+                break;
+                case 'volumedown':
+                    _decreaseVolume(input, channel);
+                break;
                 case 'status':
                     _status(channel);
                 break;
@@ -273,15 +259,9 @@ function getZones (deviceList) {
 }
 
 function _getVolume(channel) {
-
     sonos.getVolume(function(err, vol) {
         console.log(err, vol);
-        slack.sendMessage('Vol is Light Side is ' + vol + ' deadly dB _(ddB)_', channel.id);
-    });
-
-    sonos2.getVolume(function(err, vol) {
-        console.log(err, vol);
-        slack.sendMessage('Vol on Dark Side is ' + vol + ' deadly dB _(ddB)_', channel.id);
+        slack.sendMessage('Volume is ' + vol + ' deadly dB _(ddB)_', channel.id);
     });
 }
 
@@ -306,12 +286,61 @@ function _setVolume(input, channel) {
             sonos.setVolume(vol, function(err, data) {
                 _getVolume(channel);
             });
-            sonos2.setVolume(vol, function(err, data) {
-                _getVolume(channel);
-            });
         }
     }
+}
 
+function _increaseVolume(input, channel) {
+    if(channel.name !== adminChannel){
+        console.log("Only admins are allowed for this action!")
+        slack.sendMessage("Only admins are allowed for this action!", channel.id)
+        return
+    }
+
+    var vol = input[1];
+    sonos.getVolume(function(err, currentVol) {
+        if(isNaN(vol)) {
+            slack.sendMessage('Nope.', channel.id);
+            return;
+        } else {
+            vol = Number(vol) + Number(currentVol);
+            console.log(vol);
+            if(vol > maxVolume) {
+                slack.sendMessage('You also could have tinnitus _(say: tih-neye-tus)_', channel.id);
+            } else {
+                sonos.setVolume(vol, function(err, data) {
+                    _getVolume(channel);
+                });
+            }
+        }
+    });
+}
+
+function _decreaseVolume(input, channel) {
+    if(channel.name !== adminChannel){
+        console.log("Only admins are allowed for this action!")
+        slack.sendMessage("Only admins are allowed for this action!", channel.id)
+        return
+    }
+
+    var vol = input[1];
+    sonos.getVolume(function(err, currentVol) {
+        console.log(currentVol);
+        if(isNaN(vol)) {
+            slack.sendMessage('Nope.', channel.id);
+            return;
+        } else {
+            if(vol > 0) {
+                vol = Number(currentVol) - Number(vol);
+                console.log(vol);
+                sonos.setVolume(vol, function(err, data) {
+                    _getVolume(channel);
+                });
+            } else {
+                slack.sendMessage('We canna go lower than 0 cap\'n', channel.id);
+            }
+        }
+    });
 }
 
 function _getQueue() {
@@ -451,16 +480,16 @@ function _help(input, channel) {
     var message = 'Current commands!\n' +
     '=====================\n' +
     '`current` : list current track\n' +
-    '`status` : show current status of Sonos\n' +
     '`search` _text_ : search for a track, does NOT add it to the queue\n' +
-    '`add` _text_ : Add song to the queue and start playing if idle.\n' +
-    '`append` _text_ : Append a song to the previous playlist and start playing the same list again.\n' +
     '`gong` : The current track is bad! Vote for skipping this track\n' +
     '`gongcheck` : How many gong votes there are currently, as well as who has GONGED.\n' +
     '`vote` _exactSongTitle_ : Vote for a specific song title in the queue.\n' +
-    '`volume` : view current volume\n' +
     '`list` : list current queue\n' +
     '------ ADMIN FUNCTIONS ------\n' +
+    '`status` : show current status of Sonos\n' +
+    '`add` _text_ : Add song to the queue and start playing if idle.\n' +
+    '`append` _text_ : Append a song to the previous playlist and start playing the same list again.\n' +
+    '`volume` : view current volume\n' +
     '`flush` : flush the current queue\n' +
     '`setvolume` _number_ : sets volume\n' +
     '`play` : play track\n' +
@@ -479,7 +508,7 @@ function _help(input, channel) {
 function _play(input, channel) {
     if(channel.name !== adminChannel){
         console.log("Only admins are allowed for this action!")
-        slack.sendMessage("Only admins are allowed for this action! Try using *add* and I will start playing your music!", channel.id)
+        slack.sendMessage("Only admins are allowed for this action!!", channel.id)
         return
     }
     sonos.selectQueue(function (err, result) {
@@ -523,14 +552,14 @@ function _pause(input, channel) {
 function _playpause(input, channel) {
     if(channel.name !== adminChannel){
         console.log("Only admins are allowed for this action!")
-        slack.sendMessage("Only admins are allowed for this action! Try using *add* and I will start playing your music!", channel.id)
+        slack.sendMessage("Only admins are allowed for this action!!", channel.id)
         return
     }
-        sonos.play(function (err, playing) {
-             console.log([err, playing])
-                if(playing) {
-                slack.sendMessage("..resuming after sleep...", channel.id);
-            }
+    sonos.play(function (err, playing) {
+            console.log([err, playing])
+        if(playing) {
+            slack.sendMessage("..resuming after sleep...", channel.id);
+        }
     });
 }
 
@@ -547,8 +576,6 @@ function _flush(input, channel) {
         }
     });
 }
-
-
 
 function _say(input, channel) {
     var text = input[1];
@@ -588,6 +615,7 @@ function _nextTrack(channel, byPassChannelValidation) {
 }
 
 function _currentTrack(channel, cb) {
+
     sonos.currentTrack(function(err, track) {
         if(err) {
             console.log(err);
@@ -609,11 +637,39 @@ function _currentTrack(channel, cb) {
             var psec = ''+track.position%60;
             psec = psec.length == 2 ? psec : '0'+psec;
 
-
             var message = 'We´re rocking out to *' + track.artist + '* - *' + track.title + '* ('+pmin+':'+psec+'/'+fmin+':'+fsec+')';
             slack.sendMessage(message, channel.id);
         }
     });
+
+    // devices.forEach(function(data) {
+    //     data.device.currentTrack(function(err, track) {
+    //         console.log(data.name);
+    //         if(err) {
+    //             console.log(err);
+    //             if(cb) {
+    //                 return cb(err, null);
+    //             }
+    //         } else {
+    //             if(cb) {
+    //                 return cb(null, track);
+    //             }
+    //             console.log(track);
+    //             var fmin = ''+Math.floor(track.duration/60);
+    //             fmin = fmin.length == 2 ? fmin : '0'+fmin;
+    //             var fsec = ''+track.duration%60;
+    //             fsec = fsec.length == 2 ? fsec : '0'+fsec;
+
+    //             var pmin = ''+Math.floor(track.position/60);
+    //             pmin = pmin.length == 2 ? pmin : '0'+pmin;
+    //             var psec = ''+track.position%60;
+    //             psec = psec.length == 2 ? psec : '0'+psec;
+
+    //             var message = 'We´re rocking out on ' + data.name + ' to *' + track.artist + '* - *' + track.title + '* ('+pmin+':'+psec+'/'+fmin+':'+fsec+')';
+    //             slack.sendMessage(message, channel.id);
+    //         }
+    //     });
+    // });
 }
 
 function _currentTrackTitle(channel, cb) {
@@ -649,6 +705,12 @@ function _currentTrackTitle(channel, cb) {
 }
 
 function _append(input, channel) {
+    if(channel.name !== adminChannel){
+        console.log("Only admins are allowed for this action!")
+        slack.sendMessage("Only admins are allowed for this action!!", channel.id)
+        return
+    }
+
 	let accessToken = _getAccessToken(channel.id);
  	if (!accessToken) {
  		return false;
@@ -672,18 +734,6 @@ function _append(input, channel) {
 
         var albumImg = data.tracks.items[0].album.images[2].url;
         var trackName = data.tracks.items[0].artists[0].name + ' - ' + data.tracks.items[0].name;
-
-
-        /*
-        var present = false;
-        _showQueue(channel, function(err, res) {
-            res.map(function(it) {
-                if(it.uri.indexOf(spid) > -1) {
-                    present = true;
-                }
-            });
-        });
-        */
 
         sonos.getCurrentState(function (err, state) {
             if(err) {
@@ -743,6 +793,11 @@ function _append(input, channel) {
 
 
 function _add(input, channel) {
+    if(channel.name !== adminChannel){
+        console.log("Only admins are allowed for this action!")
+        slack.sendMessage("Only admins are allowed for this action!!", channel.id)
+        return
+    }
 	let accessToken = _getAccessToken(channel.id);
 	if (!accessToken) {
 		return false;
@@ -766,40 +821,6 @@ function _add(input, channel) {
 
         var albumImg = data.tracks.items[0].album.images[2].url;
         var trackName = data.tracks.items[0].artists[0].name + ' - ' + data.tracks.items[0].name;
-
-
-        /*
-        var present = false;
-        _showQueue(channel, function(err, res) {
-            res.map(function(it) {
-                if(it.uri.indexOf(spid) > -1) {
-                    present = true;
-                }
-            });
-        });
-        */
-
-        /*var curQ = _getQueue();
-        console.log('  the length' + curQ.items.length);
-
-        var present = false;
-        for(var i = 1; i < curQ.items.length; i++) {
-            console.log('  the item' + curQ.items[i]);
-        } */
-
-/*
-        sonos.getQueue(function (err, result) {
-            var present = false;
-            for(var i = 1; i < result.items.length; i++) {
-                console.log('  the item' + result.items[i]);
-                if(!present && result.items[i].uri.indexOf(spid) > -1) {
-                    console.log(' Found the requested track in the queue')
-                    present = true;
-                }
-            }
-
-        });
-*/
 
         sonos.getCurrentState(function (err, state) {
             if(err) {
@@ -877,42 +898,6 @@ function _add(input, channel) {
     // return slack.sendMessage("I have now added the following in my queue: " + input[2] + " by " + input[1]+"\n"+"https://api.spotify.com/v1/search?q=" + input[2] + "+" + input[1]+"&type=track&limit=1");
 }
 
-/*
-function _search(input, channel) {
-
-    var query = '';
-    for(var i = 1; i < input.length; i++) {
-        query += urlencode(input[i]);
-        if(i < input.length-1) {
-            query += ' ';
-        }
-    }
-
-    var getapi = urllibsync.request('https://api.spotify.com/v1/search?q=' + query + '&type=track&limit=3');
-    var data = JSON.parse(getapi.data.toString());
-    console.log(data);
-     if(data.tracks && data.tracks.items && data.tracks.items.length > 0) {
-        var spid = data.tracks.items[0].id;
-        var uri = data.tracks.items[0].uri;
-        var external_url = data.tracks.items[0].external_urls.spotify;
-
-        var albumImg = data.tracks.items[0].album.images[2].url;
-        var trackName = data.tracks.items[0].artists[0].name + ' - ' + data.tracks.items[0].name;
-
-
-
-
-            //Print the result...
-            message = 'I found the following track: "' + trackName + '" if you want to play it, use the add command..\n';
-            slack.sendMessage(message, channel.id)
-
-
-            } else {
-            slack.sendMessage('Sorry could not find that track :(', channel.id);
-    }
-}
-
-*/
 function _search(input, channel) {
 	let accessToken = _getAccessToken(channel.id);
 	if (!accessToken) {
@@ -1021,25 +1006,31 @@ function _vote(text, channel, userName) {
 }
 
 function _status(channel){
+    if(channel.name !== adminChannel){
+        console.log("Only admins are allowed for this action!")
+        slack.sendMessage("Only admins are allowed for this action!!", channel.id)
+        return
+    }
+
     sonos.getCurrentState(function (err, state) {
         if(err) {
-                console.log(err);
-            } else {
-                if (state === 'stopped') {
-                  slack.sendMessage("Sonos is currently sleeping!", channel.id)
+            console.log(err);
+        } else {
+            if (state === 'stopped') {
+                slack.sendMessage("Sonos is currently sleeping!", channel.id)
             } else if (state === 'playing') {
                 slack.sendMessage("Sonos is rocking!", channel.id)
             } else if (state === 'paused') {
                 slack.sendMessage("I'm frozen! Alive!", channel.id)
-                } else if (state === 'transitioning') {
+            } else if (state === 'transitioning') {
                 slack.sendMessage("Mayday, mayday! I'm sinking!!", channel.id)
-                } else if (state === 'no_media') {
+            } else if (state === 'no_media') {
                 slack.sendMessage("Nothing to play, nothing to do. I'm rethinking my life", channel.id)
-                }else{
-                    slack.sendMessage("No freaking idea. What is this [" + state + "]?", channel.id)
+            }else {
+                slack.sendMessage("No freaking idea. What is this [" + state + "]?", channel.id)
             }
-            }
-        });
+        }
+    });
 }
 
 
@@ -1103,48 +1094,6 @@ function _getAccessToken(channelid) {
     let tokendata = JSON.parse(getToken.data.toString());
     return tokendata.access_token;
 }
-
-
-/*
-var string = "foo",
-    substring = "oo";
-console.log(string.indexOf(substring) > -1);
-*/
-
-/*{ album:
-   { album_type: 'album',
-     available_markets: [ 'DK', 'FI', 'IS', 'NO', 'SE' ],
-     external_urls: { spotify: 'https://open.spotify.com/album/1bXZgkeQPmgQuFbpyPvU64' },
-     href: 'https://api.spotify.com/v1/albums/1bXZgkeQPmgQuFbpyPvU64',
-     id: '1bXZgkeQPmgQuFbpyPvU64',
-     images: [ [Object], [Object], [Object] ],
-     name: 'Meliora',
-     type: 'album',
-     uri: 'spotify:album:1bXZgkeQPmgQuFbpyPvU64' },
-  artists:
-   [ { external_urls: [Object],
-       href: 'https://api.spotify.com/v1/artists/1Qp56T7n950O3EGMsSl81D',
-       id: '1Qp56T7n950O3EGMsSl81D',
-       name: 'Ghost B.C.',
-       type: 'artist',
-       uri: 'spotify:artist:1Qp56T7n950O3EGMsSl81D' } ],
-  available_markets: [ 'DK', 'FI', 'IS', 'NO', 'SE' ],
-  disc_number: 1,
-  duration_ms: 253178,
-  explicit: false,
-  external_ids: { isrc: 'SEUM71500676' },
-  external_urls: { spotify: 'https://open.spotify.com/track/7mAbzwRo89VEKfXbHWdJr8' },
-  href: 'https://api.spotify.com/v1/tracks/7mAbzwRo89VEKfXbHWdJr8',
-  id: '7mAbzwRo89VEKfXbHWdJr8',
-  name: 'He Is',
-  popularity: 68,
-  preview_url: 'https://p.scdn.co/mp3-preview/efa92c62f5ada9c50b75ac46740904e3375b2205',
-  track_number: 5,
-  type: 'track',
-  uri: 'spotify:track:7mAbzwRo89VEKfXbHWdJr8' }*/
-
-// Playing with Travis.
-// Just something that will return a value
 
 module.exports = function(number, locale) {
     return number.toLocaleString(locale);
