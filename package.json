@@ -1,0 +1,39 @@
+{
+  "name": "sonosbot",
+  "version": "1.0.0",
+  "description": "Sonos bot basd on Zen Sonos project",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@gitlab.1000heads.net:1000heads/sonosbot.git"
+  },
+  "keywords": [
+    "sonos",
+    "slack"
+  ],
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "coveralls": "^2.11.14",
+    "istanbul": "^0.4.5",
+    "mocha": "^2.3.4",
+    "standard": "5.4.1"
+  },
+  "dependencies": {
+    "@slack/client": "^3.5.1",
+    "html-entities": "^1.2.0",
+    "htmlencode": "0.0.4",
+    "nconf": "^0.8.4",
+    "sonos": "git+https://github.com/bencevans/node-sonos.git#master",
+    "underscore": "^1.8.3",
+    "urlencode": "^1.1.0",
+    "urllib-sync": "^1.1.2"
+  },
+  "engines": {
+    "node": ">=6.0.0"
+  },
+  "author": "1000heads",
+  "license": "ISC"
+}
