@@ -36,7 +36,14 @@ var gongCounter = 0;
 var gongLimit = 3;
 var gongLimitPerUser = 1;
 var gongScore = {};
-var gongMessage = ["Is it really all that bad??", "Is it that distracting??", "Your eardrums are going to combust if this continues playing??", "Would some harp music be better??"];
+var gongMessage = [
+    "Is it really all that bad??", 
+    "Is it that distracting??", 
+    "Your eardrums are going to combust if this continues playing??", 
+    "Would some harp music be better??",
+    "It is bad isn't it...",
+    "booo!!! Please skip the traaaaaack!"
+];
 
 var voteVictory = 3;
 var voteLimit = 1;
