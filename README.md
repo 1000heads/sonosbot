@@ -1,6 +1,6 @@
 [![Build Status](https://travis-ci.org/htilly/zenmusic.svg?branch=master)](https://travis-ci.org/htilly/zenmusic)
 
-# zenmusic
+# sonosbot based on zenmusic
 **Slack / Sonos / Spotify / Node.js - Control Sonos through #Slack**
 
 *Screenshot*
@@ -17,11 +17,11 @@ Uses https://github.com/bencevans/node-sonos to controll Sonos.
 
 **What do I need in order to get it to work?**
 
-1: A Sonos player (configured with Spotify).  
-2: A slack-bot configured in #Slack  
-3: A server running node.js  
-4: Know the IP of your Sonos. Preferably a static one.  
-5: A Spotify API Key - Base64 representation of client_id:client_secret - [Read more](https://developer.spotify.com/web-api/authorization-guide/#client-credentials-flow) - [Get Keys](https://developer.spotify.com/my-applications/#!/)  
+1: A Sonos player (configured with Spotify).
+2: A slack-bot configured in #Slack
+3: A server running node.js
+4: Know the IP of your Sonos. Preferably a static one.
+5: A Spotify API Key - Base64 representation of client_id:client_secret - [Read more](https://developer.spotify.com/web-api/authorization-guide/#client-credentials-flow) - [Get Keys](https://developer.spotify.com/my-applications/#!/)
 Base64 encoder online can be found [here](https://www.base64encode.org).
 
 
@@ -53,7 +53,7 @@ It also future some admin commands like "setvolume", "next", "stop" etc.
 
 List of commands (just type help in the channel)
 
-* `help` : this list 
+* `help` : this list
 * `current` : list current track
 * `search` _text_ : search for a track, does NOT add it to the queue
 * `add` _text_ : Add song to the queue and start playing if idle.
@@ -73,10 +73,10 @@ List of commands (just type help in the channel)
 * `stop` : stop life
 * `next` : play next track
 * `previous` : play previous track
-    
+
 **Info**
 
-Please use it to get some music in the office / home. 
+Please use it to get some music in the office / home.
 
 We would appreciate if you drop a comment or send a pm... and please feel free to add / change stuff!! Much appreciated!
 
@@ -92,7 +92,7 @@ https://github.com/htilly/zenmusic/wiki
 
 * Validate add / unique track doesn´t work. I.e - You can add same track 10 times in a row.
 * Vote does not move track in queue.
- 
+
 **ToDo**
 
 * Code cleaning! =)
@@ -102,7 +102,7 @@ https://github.com/htilly/zenmusic/wiki
 * Vote: When voting for a song, put it in top of the queue. Queue is sorted based upon the number of votes.
 * A vote shall not automatically skip to the next track. It should just put it higher up the queue.
 * Backend DB
-* Text-to-speech. 
+* Text-to-speech.
 * Now playing. Announce when starting a new song.
 * When asking for "Stat" show most played songs and most active users.
 * When local playlist is empty -> fallback and start playing "$playlist", i.e. Spotify topp 100.
@@ -122,7 +122,7 @@ https://github.com/htilly/zenmusic/wiki
 * Admin: Delete entire queue.
 * Regularly delete the entries from the queue when the song has been played.
    * When adding a new track, do the following logic:
-        * Check "status". (fixed.. sort of..)   
+        * Check "status". (fixed.. sort of..)
         * If "playing", do a "list". Delete all songs in the queue with lower number than the current track. Then add song to queue.
         * If "sleep" clear queue, add song to queue and do "play".
 * Add clear-queue functionality.
