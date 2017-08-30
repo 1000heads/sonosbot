@@ -139,6 +139,7 @@ slack.on(RTM_EVENTS.MESSAGE, function(message) {
             console.log('term', term);
             switch(term) {
                 case 'add':
+                case ':heavy_plus_sign:':
                     _add(input, channel);
                 break;
                 case 'search':
@@ -148,15 +149,18 @@ slack.on(RTM_EVENTS.MESSAGE, function(message) {
                     _append(input, channel);
                 break;
                 case 'next':
+                case 'skip':
                     _nextTrack(channel);
                 break;
                 case 'gongPlay':
                     _gongPlay(input, channel);
                 break;
                 case 'stop':
+                case ':raised_hand_with_fingers_splayed:':
                     _stop(input, channel);
                 break;
                 case 'flush':
+                case ':toilet:':
                     _flush(input, channel);
                 break;
                 case 'play':
@@ -203,16 +207,15 @@ slack.on(RTM_EVENTS.MESSAGE, function(message) {
                 case 'volume':
                     _getVolume(channel);
                 break;
-                case 'volup':
-                    _increaseVolume(channel);
-                break;
                 case 'setvolume':
                     _setVolume(input, channel);
                 break;
                 case 'volumeup':
+                case ':loud_sound:':
                     _increaseVolume(input, channel);
                 break;
                 case 'volumedown':
+                case ':sound:':
                     _decreaseVolume(input, channel);
                 break;
                 case 'status':
@@ -486,22 +489,24 @@ function _help(input, channel) {
     '=====================\n' +
     '`current` : list current track\n' +
     '`search` _text_ : search for a track, does NOT add it to the queue\n' +
-    '`gong` : The current track is bad! Vote for skipping this track\n' +
+    '`gong` or 💩 : The current track is trash! Vote for skipping this track\n' +
     '`gongcheck` : How many gong votes there are currently, as well as who has GONGED.\n' +
     '`vote` _exactSongTitle_ : Vote for a specific song title in the queue.\n' +
     '`list` : list current queue\n' +
     '------ ADMIN FUNCTIONS ------\n' +
     '`status` : show current status of Sonos\n' +
-    '`add` _text_ : Add song to the queue and start playing if idle.\n' +
+    '`add` or :heavy_plus_sign: _text_ : Add song to the queue and start playing if idle.\n' +
     '`append` _text_ : Append a song to the previous playlist and start playing the same list again.\n' +
     '`volume` : view current volume\n' +
-    '`flush` : flush the current queue\n' +
+    '`flush` or 🚽 : flush the current queue\n' +
     '`setvolume` _number_ : sets volume\n' +
+    '`volumeup` or :loud_sound: : increase volume by 10\n' +
+    '`volumedown` or :sound: : decrease volume by 10\n' +
     '`play` : play track\n' +
-    '`stop` : stop life\n' +
+    '`stop` or :raised_hand_with_fingers_splayed: : stop life\n' +
     '`pause` : pause life\n' +
     '`playpause` : resume after pause\n' +
-    '`next` : play next track\n' +
+    '`next` or `skip` : play next track\n' +
     '`previous` : play previous track\n' +
     '`blacklist` : show users on blacklist\n' +
     '`blacklist add @username` : add `@username` to the blacklist\n' +
