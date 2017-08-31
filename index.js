@@ -14,7 +14,6 @@ config.argv()
     'adminChannel':    'music-admin',
     'standardChannel': 'music',
     'maxVolume':       '75',
-    'market':          'US',
     'blacklist':       []
   });
 
@@ -22,8 +21,8 @@ let adminChannel = config.get('adminChannel');
 let standardChannel = config.get('standardChannel');
 let sonos = new Sonos.Sonos(config.get('sonos'));
 let token = config.get('token');
-let maxVolume = config.get('maxVolume');
 let market = config.get('market');
+let maxVolume = config.get('maxVolume');
 let blacklist = config.get('blacklist');
 let apiKey = new Buffer(config.get('apiKey')).toString('base64');
 if(!Array.isArray(blacklist)) {
@@ -47,7 +46,7 @@ var gongMessage = [
 ];
 
 let voteVictory = 3;
-let voteLimit = 1;
+let voteLimit = 100;
 let votes = {};
 
 let gongTrack = ""; // What track was a GONG called on
@@ -218,6 +217,12 @@ slack.on(RTM_EVENTS.MESSAGE, function(message) {
                 case `${prefix} say`:
                     // _say(input, channel);
                 break;
+                case `${prefix} select`:
+                    _selectTrack(input, channel);
+                break;
+                case `${prefix} random`:
+                    _playRandom(channel);
+                break;
                 case `${prefix} current`:
                     _currentTrack(channel);
                 break;
@@ -283,13 +288,13 @@ function _getVolume(channel, data) {
     for (let key in devices) {
         devices[key].device.getVolume(function(err, vol) {
             console.log(err, vol);
-            slack.sendMessage('Volume for ' + devices[key].name + ' is now ' + vol + 'dB _(ddB)_', channel.id);
+            slack.sendMessage('Volume for ' + devices[key].name + ' is now ' + vol + 'dB', channel.id);
         });
     };
 }
 
 function _getVolumeCallback(channel, name, volume) {
-    slack.sendMessage('Volume for ' + name + ' is now ' + volume + 'dB _(ddB)_', channel.id);
+    slack.sendMessage('Volume for ' + name + ' is now ' + volume + 'dB', channel.id);
 }
 
 function _setVolumeByName(input, channel) {
@@ -419,7 +424,6 @@ function _showQueue(channel, cb) {
             }
             console.log(err)
             slack.sendMessage('Couldn\'t fetch the queue', channel.id);
-
         } else {
             if(cb) {
                 return cb(null, result.items);
@@ -517,12 +521,10 @@ function _gongcheck(channel, userName) {
     });
 }
 
-
 function _ungong(channel, userName) {
     console.log("_ungong...");
   slack.sendMessage("DENIED!! As much as you want to listen to this, afraid we belong to the Democratic Republic of Sonos.", channel.id);
 }
-
 
 function _previous(input, channel) {
     if(channel.name !== adminChannel){
@@ -530,6 +532,7 @@ function _previous(input, channel) {
         slack.sendMessage("Only admins are allowed to do this. Please ask nicely!", channel.id)
         return
     }
+
     sonos.previous(function(err, previous) {
         console.log(err, previous);
     });
@@ -546,6 +549,8 @@ function _help(input, channel) {
     '`sonos vote` _exactSongTitle_ : Vote for a specific song title in the queue.\n' +
     '`sonos list` : list current queue\n' +
     '------ ADMIN FUNCTIONS ------\n' +
+    '`sonos select` _number_ : select the track in list by position\n' +
+    '`sonos shuffle`: selects a track at random from the list\n' +
     '`sonos status` : show current status of Sonos\n' +
     '`sonos append` _text_ : Append a song to the previous playlist and start playing the same list again.\n' +
     '`sonos volume` : view current volume\n' +
@@ -573,13 +578,14 @@ function _play(input, channel) {
         slack.sendMessage("Only admins are allowed to do this. Please ask nicely!!", channel.id)
         return
     }
+
     sonos.selectQueue(function (err, result) {
         sonos.play(function (err, playing) {
              console.log([err, playing])
-                if(playing) {
-                    slack.sendMessage("Now playing the music", channel.id);
-                }
-            });
+            if(playing) {
+                slack.sendMessage("Now playing the music", channel.id);
+            }
+        });
     });
 }
 
@@ -589,6 +595,7 @@ function _stop(input, channel) {
         slack.sendMessage("Only admins are allowed to do this. Please ask nicely!", channel.id)
         return
     }
+
     sonos.stop(function (err, stopped) {
         console.log([err, stopped])
         if(stopped) {
@@ -659,12 +666,77 @@ function _gongPlay(channel) {
     });
 }
 
+function _selectTrack(input, channel) {
+    if(channel.name !== adminChannel){
+        console.log("Only admins are allowed to do this. Please ask nicely!")
+        slack.sendMessage("Only admins are allowed to do this. Please ask nicely!", channel.id)
+        return
+    }
+
+    let track = Number(input[2]);
+
+    sonos.selectTrack(track+1, function(err, seeked) {
+        if (err) {
+            slack.sendMessage('Could not load track ' + track+1, channel.id);
+            return;
+        }
+
+        if (seeked) {
+            sonos.currentTrack(function(err, track) {
+                if(err) {
+                    console.log(err);
+                } else {
+                    let message = 'Now playing *' + track.title + '* by *' + track.artist + '';
+                    slack.sendMessage(message, channel.id);
+                }
+            });
+        }
+    });
+}
+
+function _playRandom(channel) {
+    if(channel.name !== adminChannel){
+        console.log("Only admins are allowed to do this. Please ask nicely!")
+        slack.sendMessage("Only admins are allowed to do this. Please ask nicely!", channel.id)
+        return
+    }
+
+    sonos.getQueue(function (err, result) {
+        if (err) {
+            console.log(err);
+            slack.sendMessage('Couldn\'t fetch the queue', channel.id);
+        } else {
+            let length = result.total;
+            let track = Math.floor(Math.random() * length);
+
+            sonos.selectTrack(track, function(err, seeked) {
+                if (err) {
+                    slack.sendMessage('Could not load track ' + track, channel.id);
+                    return;
+                }
+
+                if (seeked) {
+                    sonos.currentTrack(function(err, track) {
+                        if(err) {
+                            console.log(err);
+                        } else {
+                            let message = 'Spun the wheel and got *' + track.title + '* by *' + track.artist + '*';
+                            slack.sendMessage(message, channel.id);
+                        }
+                    });
+                }
+            });
+        }
+    });
+}
+
 function _nextTrack(channel, byPassChannelValidation) {
     if(channel.name !== adminChannel && !byPassChannelValidation){
         console.log("Only admins are allowed to do this. Please ask nicely!")
         slack.sendMessage("Only admins are allowed to do this. Please ask nicely!", channel.id)
         return
     }
+
     sonos.next(function (err, nexted) {
         if(err) {
             console.log(err);
@@ -737,12 +809,6 @@ function _currentTrackTitle(channel, cb) {
 }
 
 function _append(input, channel) {
-    if(channel.name !== adminChannel){
-        console.log("Only admins are allowed to do this. Please ask nicely!")
-        slack.sendMessage("Only admins are allowed to do this. Please ask nicely!!", channel.id)
-        return
-    }
-
 	let accessToken = _getAccessToken(channel.id);
     if (!accessToken) {
         return false;
@@ -778,8 +844,10 @@ function _append(input, channel) {
 
                     // Old version..  New is supposed to fix 500 problem...
                     // sonos.addSpotifyQueue(spid, function (err, res) {
+                    // Alternate new version..
+                    // sonos.addSpotify(spid, function (err, res) {
 
-                    sonos.addSpotify(spid, function (err, res) {
+                    sonos.addSpotifyQueue(spid, function (err, res) {
                         let message = '';
                         if(res) {
                             let queueLength = res[0].FirstTrackNumberEnqueued;
@@ -860,6 +928,7 @@ function _add(input, channel) {
 
                             // Old version..  New is supposed to fix 500 problem...
                             // sonos.addSpotifyQueue(spid, function (err, res) {
+                            // Alternate new version..
                             // sonos.addSpotify(spid, function (err, res) {
 
                             sonos.addSpotifyQueue(spid, function (err, res) {
@@ -867,7 +936,7 @@ function _add(input, channel) {
                                 if(res) {
                                     let queueLength = res[0].FirstTrackNumberEnqueued;
                                     console.log('queueLength', queueLength);
-                                    message = 'I have added "' + trackName + '" to the queue!\n'+albumImg+'\nPosition in queue is ' + queueLength;
+                                    message = 'I have added "' + trackName + '" to the queue!\n'+albumImg+'\nPosition in queue is ' + queueLength-1;
                                 } else {
                                     message = 'Error!';
                                     console.log(err);
@@ -892,6 +961,7 @@ function _add(input, channel) {
 
                     // Old version..  New is supposed to fix 500 problem...
                     // sonos.addSpotifyQueue(spid, function (err, res) {
+                    // Alternate new version..
                     // sonos.addSpotify(spid, function (err, res) {
 
                     sonos.addSpotifyQueue(spid, function (err, res) {
@@ -968,7 +1038,6 @@ function _search(input, channel) {
 
 function _vote(text, channel, userName) {
     let trackName = text.substring(11);
-    console.log(trackName);
 
     //Decode any htmlentities as returned in the trackName
     entities = new Entities();
@@ -981,7 +1050,7 @@ function _vote(text, channel, userName) {
         } else {
             for(let i = 0; i < result.items.length; i++)
             {
-                let item = result.items[i]
+                let item = result.items[i];
                 if(item['title'].toLowerCase() === trackName.toLowerCase()){
                     if(trackName in votes)
                     {
@@ -994,6 +1063,7 @@ function _vote(text, channel, userName) {
                                 votedTimes++;
                             }
                         }
+                        console.log(listOfVotes);
 
                         if(votedTimes >= voteLimit)
                         {
@@ -1007,17 +1077,18 @@ function _vote(text, channel, userName) {
 
                         if(listOfVotes.length >= voteVictory)
                         {
-                            slack.sendMessage("Vote passed! Will put " + trackName + " on top! Will reset votes for this track.", channel.id)
-                            delete votes[trackName]
+                            // Should play item
+                            slack.sendMessage("Vote passed! Will put " + trackName + " on top! Will reset votes for this track.", channel.id);
+                            delete votes[trackName];
+
                             // Should play item
                             _currentTrack(channel,
                                 function(error, track){
-                                    sonos.addSpotifyTagToPositionInQueue(item['uri'], track.positionInQueue + 1, function (err, result) {
-                                        if (err) {console.log(err)}
-                                            else{_nextTrack(channel, true);}
-                                    })
+                                    sonos.addSpotify('3a4U9arGcc4ATa7shChhLQP0', function (err, res) {
+                                        console.log(err);
+                                    });
                                 }
-                            )
+                            );
                         }
                     }else{
                         votes[trackName] = [userName];
