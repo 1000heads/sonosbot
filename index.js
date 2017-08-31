@@ -659,7 +659,6 @@ function _gongPlay(channel) {
     });
 }
 
-
 function _nextTrack(channel, byPassChannelValidation) {
     if(channel.name !== adminChannel && !byPassChannelValidation){
         console.log("Only admins are allowed to do this. Please ask nicely!")
@@ -703,35 +702,6 @@ function _currentTrack(channel, cb) {
             slack.sendMessage(message, channel.id);
         }
     });
-
-    // devices.forEach(function(data) {
-    //     data.device.currentTrack(function(err, track) {
-    //         console.log(data.name);
-    //         if(err) {
-    //             console.log(err);
-    //             if(cb) {
-    //                 return cb(err, null);
-    //             }
-    //         } else {
-    //             if(cb) {
-    //                 return cb(null, track);
-    //             }
-    //             console.log(track);
-    //             let fmin = ''+Math.floor(track.duration/60);
-    //             fmin = fmin.length == 2 ? fmin : '0'+fmin;
-    //             let fsec = ''+track.duration%60;
-    //             fsec = fsec.length == 2 ? fsec : '0'+fsec;
-
-    //             let pmin = ''+Math.floor(track.position/60);
-    //             pmin = pmin.length == 2 ? pmin : '0'+pmin;
-    //             let psec = ''+track.position%60;
-    //             psec = psec.length == 2 ? psec : '0'+psec;
-
-    //             let message = 'We´re rocking out on ' + data.name + ' to *' + track.artist + '* - *' + track.title + '* ('+pmin+':'+psec+'/'+fmin+':'+fsec+')';
-    //             slack.sendMessage(message, channel.id);
-    //         }
-    //     });
-    // });
 }
 
 function _currentTrackTitle(channel, cb) {
@@ -890,7 +860,6 @@ function _add(input, channel) {
 
                             // Old version..  New is supposed to fix 500 problem...
                             // sonos.addSpotifyQueue(spid, function (err, res) {
-
                             // sonos.addSpotify(spid, function (err, res) {
 
                             sonos.addSpotifyQueue(spid, function (err, res) {
@@ -1033,7 +1002,7 @@ function _vote(text, channel, userName) {
                         }else
                         {
                             votes[trackName].push(userName)
-                            slack.sendMessage("Valid vote by " + userName + "!", channel.id)
+                            slack.sendMessage("Valid vote for " + trackName + " by " + userName + "!", channel.id)
                             votedTimes++
                         }
                         if(listOfVotes.length >= voteVictory)
@@ -1149,12 +1118,6 @@ function _getAccessToken(channelid) {
     let tokendata = JSON.parse(getToken.data.toString());
     return tokendata.access_token;
 }
-
-function _sendGiphyResponse(input, channel) {
-    let string = (input.length > 1) ? input[1] : input[0];
-    slack.sendMessage('I can do that too, ' + string + '!', channel.id);
-}
-
 
 module.exports = function(number, locale) {
     return number.toLocaleString(locale);
