@@ -6,5 +6,5 @@
     "market" : "US",
     "maxVolume" : 75,
     "blacklist" : "@justin.bieber, @one.direction",
-    "apiKey": "base64 string of Spotify client:secret"
+    "apiKey": "spotify client:secret"
 }
