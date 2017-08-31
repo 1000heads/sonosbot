@@ -132,7 +132,6 @@ slack.on('open', function() {
                     }
 
                     devices[name] = { device: new Sonos.Sonos(data.ip, 1400), name: data.name };
-                    // console.log(devices.light);
                 });
             });
         });
@@ -553,11 +552,11 @@ function _help(input, channel) {
     '`sonos flush` or 🚽 : flush the current queue\n' +
     '`sonos volumeup` or :loud_sound: : increase volume by 10\n' +
     '`sonos volumedown` or :sound: : decrease volume by 10\n' +
-    '`sonos setvolume` _name_ _volume_ : set volume of the device to the amount\n' +
+    '`sonos setvolume` _devicename_ _volume_ : set volume of the device to the amount\n' +
     '`sonos devices` : get the short names of the current devices\n' +
     '`sonos play` : play track\n' +
-    '`sonos stop` or :raised_hand_with_fingers_splayed: : stop life\n' +
-    '`sonos pause` : pause life\n' +
+    '`sonos stop` or :raised_hand_with_fingers_splayed: : stop\n' +
+    '`sonos pause` : pause\n' +
     '`sonos playpause` : resume after pause\n' +
     '`sonos next` or `sonos skip` : play next track\n' +
     '`sonos previous` : play previous track\n' +
