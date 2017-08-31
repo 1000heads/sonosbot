@@ -606,7 +606,7 @@ function _pause(input, channel) {
     sonos.selectQueue(function (err, result) {
         sonos.pause(function (err, paused) {
              console.log([err, paused])
-                slack.sendMessage(".. takning a nap....", channel.id);
+                slack.sendMessage("Taking a nap....", channel.id);
             });
     });
 }
@@ -889,9 +889,11 @@ function _add(input, channel) {
                             //Then add the track to playlist...
 
                             // Old version..  New is supposed to fix 500 problem...
-                            //sonos.addSpotifyQueue(spid, function (err, res) {
+                            // sonos.addSpotifyQueue(spid, function (err, res) {
 
-                            sonos.addSpotify(spid, function (err, res) {
+                            // sonos.addSpotify(spid, function (err, res) {
+
+                            sonos.addSpotifyQueue(spid, function (err, res) {
                                 let message = '';
                                 if(res) {
                                     let queueLength = res[0].FirstTrackNumberEnqueued;
@@ -920,7 +922,9 @@ function _add(input, channel) {
                     //Add the track to playlist...
 
                     // Old version..  New is supposed to fix 500 problem...
+                    // sonos.addSpotifyQueue(spid, function (err, res) {
                     // sonos.addSpotify(spid, function (err, res) {
+
                     sonos.addSpotifyQueue(spid, function (err, res) {
                         console.log(res);
                         let message = '';
@@ -967,6 +971,7 @@ function _search(input, channel) {
     let getapi = urllibsync.request('https://api.spotify.com/v1/search?q=' + query + '&type=track&limit=' + searchLimit + '&market=' + market + '&access_token=' + accessToken);
     let data = JSON.parse(getapi.data.toString());
     console.log(data);
+
     if(data.tracks && data.tracks.items && data.tracks.items.length > 0) {
         let trackNames = [];
 
@@ -993,7 +998,8 @@ function _search(input, channel) {
 }
 
 function _vote(text, channel, userName) {
-    let trackName = text.substring(text.indexOf(' ')+1)
+    let trackName = text.substring(11);
+    console.log(trackName);
 
     //Decode any htmlentities as returned in the trackName
     entities = new Entities();
@@ -1007,7 +1013,7 @@ function _vote(text, channel, userName) {
             for(let i = 0; i < result.items.length; i++)
             {
                 let item = result.items[i]
-                if(item['title'] === trackName){
+                if(item['title'].toLowerCase() === trackName.toLowerCase()){
                     if(trackName in votes)
                     {
                         let listOfVotes = votes[trackName]
