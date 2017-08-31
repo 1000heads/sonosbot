@@ -33,11 +33,18 @@ if(!Array.isArray(blacklist)) {
 let devices = {};
 let searchLimit = 10;
 
-let gongCounter = 0;
-let gongLimit = 3;
-let gongLimitPerUser = 1;
-let gongScore = {};
-let gongMessage = ["Is it really all that bad??", "Is it that distracting??", "Your eardrums are going to combust if this continues playing??", "Would some harp music be better??"];
+var gongCounter = 0;
+var gongLimit = 3;
+var gongLimitPerUser = 1;
+var gongScore = {};
+var gongMessage = [
+    "Is it really all that bad??",
+    "Is it that distracting??",
+    "Your eardrums are going to combust if this continues playing??",
+    "Would some harp music be better??",
+    "It is bad isn't it...",
+    "Booo!!! Please skip the traaaaaack!"
+];
 
 let voteVictory = 3;
 let voteLimit = 1;
@@ -349,21 +356,23 @@ function _increaseVolume(channel) {
     }
 
     for (let key in devices) {
-        devices[key].device.getVolume(function(err, currentVol) {
-            if(isNaN(currentVol)) {
-                slack.sendMessage('Nope.', channel.id);
-                return;
-            } else {
-                vol = Number(currentVol) + 10;
-                if(vol > maxVolume) {
-                    slack.sendMessage(data.name + ', you also could have tinnitus _(say: tih-neye-tus)_', channel.id);
+        if (key !== 'reception') {
+            devices[key].device.getVolume(function(err, currentVol) {
+                if(isNaN(currentVol)) {
+                    slack.sendMessage('Nope.', channel.id);
+                    return;
                 } else {
-                    devices[key].device.setVolume(vol, function() {
-                        _getVolumeCallback(channel, data.name, vol);
-                    });
+                    vol = Number(currentVol) + 10;
+                    if(vol > maxVolume) {
+                        slack.sendMessage(data.name + ', you also could have tinnitus _(say: tih-neye-tus)_', channel.id);
+                    } else {
+                        devices[key].device.setVolume(vol, function() {
+                            _getVolumeCallback(channel, devices[key].name, vol);
+                        });
+                    }
                 }
-            }
-        });
+            });
+        }
     };
 }
 
@@ -375,19 +384,23 @@ function _decreaseVolume(channel) {
     }
 
     for (let key in devices) {
-        devices[key].device.getVolume(function(err, currentVol) {
-            if(isNaN(currentVol)) {
-                slack.sendMessage('Nope.', channel.id);
-                return;
-            } else {
-                if(currentVol > 0) {
-                    vol = Number(currentVol) - 10;
-                    devices[key].device.setVolume(vol, _getVolumeCallback(channel, devices[key].name, vol));
+        if (key !== 'reception') {
+            devices[key].device.getVolume(function(err, currentVol) {
+                if(isNaN(currentVol)) {
+                    slack.sendMessage('Nope.', channel.id);
+                    return;
                 } else {
-                    slack.sendMessage('We canna go lower than 0 cap\'n', channel.id);
+                    if(currentVol > 0) {
+                        vol = Number(currentVol) - 10;
+                        devices[key].device.setVolume(vol, function() {
+                            _getVolumeCallback(channel, devices[key].name, vol);
+                        });
+                    } else {
+                        slack.sendMessage('We canna go lower than 0 cap\'n', channel.id);
+                    }
                 }
-            }
-        });
+            });
+        }
     };
 }
 
