@@ -55,9 +55,13 @@ let slack = new RtmClient(token, {
     autoMark: true
 });
 
+function startSlack() {
+    slack.start();
+}
+
 throng({
     lifetime: Infinity
-  }, slack.start());
+  }, startSlack);
 
 slack.on('open', function() {
     let channel, channels, group, groups, id, messages, unreads;
