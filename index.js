@@ -36,7 +36,7 @@ var gongMessage = [
 ];
 
 let voteVictory = 3;
-let voteLimit = 100;
+let voteLimit = 1;
 let votes = {};
 
 let gongTrack = ""; // What track was a GONG called on
