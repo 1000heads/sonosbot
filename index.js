@@ -2,7 +2,6 @@ const Sonos = require('sonos');
 const urllibsync = require('urllib-sync');
 const urlencode = require('urlencode');
 const fs = require('fs');
-// const config = require('nconf');
 const config = require('./config');
 const Entities = require('html-entities').AllHtmlEntities;
 const slackclient = require('@slack/client');
@@ -16,25 +15,6 @@ let market = config.market;
 let maxVolume = config.maxVolume;
 let blacklist = config.blacklist;
 let apiKey = new Buffer(config.apiKey).toString('base64');
-
-// config.argv()
-//   .env()
-//   .file({ file: 'config.json' })
-//   .defaults({
-//     'adminChannel':    'music-admin',
-//     'standardChannel': 'music',
-//     'maxVolume':       '75',
-//     'blacklist':       []
-// });
-
-// let adminChannel = config.get('adminChannel');
-// let standardChannel = config.get('standardChannel');
-// let sonos = new Sonos.Sonos(config.get('sonos'));
-// let token = config.get('token');
-// let market = config.get('market');
-// let maxVolume = config.get('maxVolume');
-// let blacklist = config.get('blacklist');
-// let apiKey = new Buffer(config.get('apiKey')).toString('base64');
 if(!Array.isArray(blacklist)) {
     blacklist = blacklist.replace(/\s*(,|^|$)\s*/g, "$1").split(/\s*,\s*/);
 }

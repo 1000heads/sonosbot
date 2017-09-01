@@ -25,7 +25,6 @@
     "@slack/client": "^3.5.1",
     "html-entities": "^1.2.0",
     "htmlencode": "0.0.4",
-    "nconf": "^0.8.4",
     "sonos": "^0.15.0",
     "underscore": "^1.8.3",
     "urlencode": "^1.1.0",
