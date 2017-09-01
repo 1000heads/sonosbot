@@ -989,7 +989,7 @@ function _add(input, channel) {
         } else {
             slack.sendMessage('Sorry could not find that track :frowning: Have your tried using *search* to find it?', channel.id);
         }
-    }).catch((err) => slack.sendMessage('Sorry, could not add your track', channel.id));
+    }).catch((err) => slack.sendMessage('Sorry, could not add your track. ' + err, channel.id));
 
     // let getapi = urllibsync.request('https://api.spotify.com/v1/search?q=' + query + '&type=track&limit=1&market=' + market + '&access_token=' + accessToken);
 }
