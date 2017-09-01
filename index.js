@@ -902,7 +902,7 @@ function _add(input, channel) {
     }
 
     let getapi = axios.get('https://api.spotify.com/v1/search?q=' + query + '&type=track&limit=1&market=' + market + '&access_token=' + accessToken).then(function(response) {
-        // let data = JSON.parse(response.data.toString());
+        let data = response.data.toString();
         console.log(response.data);
         if(data.tracks && data.tracks.items && data.tracks.items.length > 0) {
             let spid = data.tracks.items[0].id;
@@ -989,7 +989,7 @@ function _add(input, channel) {
         } else {
             slack.sendMessage('Sorry could not find that track :frowning: Have your tried using *search* to find it?', channel.id);
         }
-    }).catch((err) => slack.sendMessage('Sorry, could not add your track. ' + err, channel.id));
+    }).catch((err) => slack.sendMessage('Sorry, could not add your track.', channel.id));
 
     // let getapi = urllibsync.request('https://api.spotify.com/v1/search?q=' + query + '&type=track&limit=1&market=' + market + '&access_token=' + accessToken);
 }
