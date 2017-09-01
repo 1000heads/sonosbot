@@ -2,10 +2,12 @@ const Sonos = require('sonos');
 const urllibsync = require('urllib-sync');
 const urlencode = require('urlencode');
 const fs = require('fs');
-const config = require('./config');
 const Entities = require('html-entities').AllHtmlEntities;
 const slackclient = require('@slack/client');
 const _ = require('underscore');
+const throng = require('throng');
+const axios = require('axios');
+const config = require('./config');
 
 adminChannel = config.adminChannel;
 let standardChannel = config.standardChannel
@@ -129,145 +131,151 @@ slack.on('open', function() {
     return console.log("Starting...");
 });
 
-slack.on(RTM_EVENTS.MESSAGE, function(message) {
-    console.log(message);
-    let channel, channelError, channelName, errors, response, text, textError, ts, type, typeError, user, userName;
 
-    channel = slack.dataStore.getChannelGroupOrDMById(message.channel);
-    user = slack.dataStore.getUserById(message.user);
-    response = '';
-    type = message.type, ts = message.ts, text = message.text;
-    channelName = (channel != null ? channel.is_channel : void 0) ? '#' : '';
-    channelName = channelName + (channel ? channel.name : 'UNKNOWN_CHANNEL');
-    userName = (user != null ? user.name : void 0) != null ? "@" + user.name : "UNKNOWN_USER";
-    console.log("Received: " + type + " " + channelName + " " + userName + " " + ts + " \"" + text + "\"");
-    if (type === 'message' && (text != null) && (channel != null)) {
 
-        if (blacklist.indexOf(userName) !== -1) {
-            console.log('User ' + userName + ' is blacklisted');
-            slack.sendMessage("Nice try " + userName + ", you're banned :)", channel.id)
-            return false;
+throng({
+    lifetime: Infinity
+  },
+    slack.on(RTM_EVENTS.MESSAGE, function(message) {
+        console.log(message);
+        let channel, channelError, channelName, errors, response, text, textError, ts, type, typeError, user, userName;
+
+        channel = slack.dataStore.getChannelGroupOrDMById(message.channel);
+        user = slack.dataStore.getUserById(message.user);
+        response = '';
+        type = message.type, ts = message.ts, text = message.text;
+        channelName = (channel != null ? channel.is_channel : void 0) ? '#' : '';
+        channelName = channelName + (channel ? channel.name : 'UNKNOWN_CHANNEL');
+        userName = (user != null ? user.name : void 0) != null ? "@" + user.name : "UNKNOWN_USER";
+        console.log("Received: " + type + " " + channelName + " " + userName + " " + ts + " \"" + text + "\"");
+        if (type === 'message' && (text != null) && (channel != null)) {
+
+            if (blacklist.indexOf(userName) !== -1) {
+                console.log('User ' + userName + ' is blacklisted');
+                slack.sendMessage("Nice try " + userName + ", you're banned :)", channel.id)
+                return false;
+            } else {
+                let prefix = 'sonos';
+                let input = text.split(' ');
+                let term = (input[0].toLowerCase() === 'sonos') ? `${input[0]} ${input[1]}`.toLowerCase() : input[0].toLowerCase();
+                console.log('term', term);
+                switch(term) {
+                    case ':heavy_plus_sign:':
+                    case `${prefix} add`:
+                        _add(input, channel);
+                    break;
+                    case `${prefix} search`:
+                        _search(input, channel);
+                    break;
+                    case `${prefix} append`:
+                        _append(input, channel);
+                    break;
+                    case `${prefix} skip`:
+                    case `${prefix} next`:
+                        _nextTrack(channel);
+                    break;
+                    case `${prefix} gongPlay`:
+                        _gongPlay(input, channel);
+                    break;
+                    case `${prefix} stop`:
+                    case ':raised_hand_with_fingers_splayed:':
+                        _stop(input, channel);
+                    break;
+                    case `${prefix} flush`:
+                    case ':toilet:':
+                        _flush(input, channel);
+                    break;
+                    case `${prefix} play`:
+                        _play(input, channel);
+                    break;
+                    case `${prefix} pause`:
+                        _pause(input, channel);
+                    break;
+                    case `${prefix} playpause`:
+                        _playpause(input, channel);
+                    break;
+                    case `${prefix} help`:
+                        _help(input, channel);
+                    break;
+                    case `${prefix} dong`:
+                    case `${prefix} gong`:
+                    case ':poop:':
+                    case ':hankey:':
+                    case ':(':
+                        _gong(channel, userName);
+                    break;
+                    case `${prefix} gongcheck`:
+                    case `${prefix} dongcheck`:
+                        _gongcheck(channel, userName);
+                    break;
+                    case `${prefix} ungong`:
+                        _ungong(channel, userName);
+                    break;
+                    case `${prefix} say`:
+                        // _say(input, channel);
+                    break;
+                    case `${prefix} select`:
+                        _selectTrack(input, channel);
+                    break;
+                    case `${prefix} random`:
+                        _playRandom(channel);
+                    break;
+                    case `${prefix} current`:
+                        _currentTrack(channel);
+                    break;
+                    case `${prefix} vote`:
+                        _vote(text, channel, userName);
+                    break;
+                    case `${prefix} previous`:
+                        _previous(input, channel);
+                    break;
+                    case `${prefix} list`:
+                    case `${prefix} ls`:
+                    case `${prefix} playlist`:
+                        _showQueue(channel);
+                    break;
+                    case `${prefix} volume`:
+                        _getVolume(channel);
+                    break;
+                    case `${prefix} setvolume`:
+                        _setVolumeByName(input, channel);
+                    break;
+                    case `${prefix} devices`:
+                        _listDevices(channel);
+                    break;
+                    case `${prefix} mute`:
+                        _mute(input, channel);
+                    break;
+                    case `${prefix} volumeup`:
+                    case ':loud_sound:':
+                        _increaseVolume(channel);
+                    break;
+                    case `${prefix} volumedown`:
+                    case ':sound:':
+                        _decreaseVolume(channel);
+                    break;
+                    case `${prefix} status`:
+                        _status(channel);
+                    break;
+                    case `${prefix} blacklist`:
+                        _blacklist(input, channel);
+                    break;
+                    default:
+                    break;
+                }
+            } // end if blacklist
+
         } else {
-            let prefix = 'sonos';
-            let input = text.split(' ');
-            let term = (input[0].toLowerCase() === 'sonos') ? `${input[0]} ${input[1]}`.toLowerCase() : input[0].toLowerCase();
-            console.log('term', term);
-            switch(term) {
-                case ':heavy_plus_sign:':
-                case `${prefix} add`:
-                    _add(input, channel);
-                break;
-                case `${prefix} search`:
-                    _search(input, channel);
-                break;
-                case `${prefix} append`:
-                    _append(input, channel);
-                break;
-                case `${prefix} skip`:
-                case `${prefix} next`:
-                    _nextTrack(channel);
-                break;
-                case `${prefix} gongPlay`:
-                    _gongPlay(input, channel);
-                break;
-                case `${prefix} stop`:
-                case ':raised_hand_with_fingers_splayed:':
-                    _stop(input, channel);
-                break;
-                case `${prefix} flush`:
-                case ':toilet:':
-                    _flush(input, channel);
-                break;
-                case `${prefix} play`:
-                    _play(input, channel);
-                break;
-                case `${prefix} pause`:
-                    _pause(input, channel);
-                break;
-                case `${prefix} playpause`:
-                    _playpause(input, channel);
-                break;
-                case `${prefix} help`:
-                    _help(input, channel);
-                break;
-                case `${prefix} dong`:
-                case `${prefix} gong`:
-                case ':poop:':
-                case ':hankey:':
-                case ':(':
-                    _gong(channel, userName);
-                break;
-                case `${prefix} gongcheck`:
-                case `${prefix} dongcheck`:
-                    _gongcheck(channel, userName);
-                break;
-                case `${prefix} ungong`:
-                    _ungong(channel, userName);
-                break;
-                case `${prefix} say`:
-                    // _say(input, channel);
-                break;
-                case `${prefix} select`:
-                    _selectTrack(input, channel);
-                break;
-                case `${prefix} random`:
-                    _playRandom(channel);
-                break;
-                case `${prefix} current`:
-                    _currentTrack(channel);
-                break;
-                case `${prefix} vote`:
-                    _vote(text, channel, userName);
-                break;
-                case `${prefix} previous`:
-                    _previous(input, channel);
-                break;
-                case `${prefix} list`:
-                case `${prefix} ls`:
-                case `${prefix} playlist`:
-                    _showQueue(channel);
-                break;
-                case `${prefix} volume`:
-                    _getVolume(channel);
-                break;
-                case `${prefix} setvolume`:
-                    _setVolumeByName(input, channel);
-                break;
-                case `${prefix} devices`:
-                    _listDevices(channel);
-                break;
-                case `${prefix} mute`:
-                    _mute(input, channel);
-                break;
-                case `${prefix} volumeup`:
-                case ':loud_sound:':
-                    _increaseVolume(channel);
-                break;
-                case `${prefix} volumedown`:
-                case ':sound:':
-                    _decreaseVolume(channel);
-                break;
-                case `${prefix} status`:
-                    _status(channel);
-                break;
-                case `${prefix} blacklist`:
-                    _blacklist(input, channel);
-                break;
-                default:
-                break;
-            }
-        } // end if blacklist
-
-    } else {
-        typeError = type !== 'message' ? "unexpected type " + type + "." : null;
-        textError = text == null ? 'text was undefined.' : null;
-        channelError = channel == null ? 'channel was undefined.' : null;
-        errors = [typeError, textError, channelError].filter(function(element) {
-            return element !== null;
-        }).join(' ');
-        return console.log("Could not respond. " + errors);
-  }
-});
+            typeError = type !== 'message' ? "unexpected type " + type + "." : null;
+            textError = text == null ? 'text was undefined.' : null;
+            channelError = channel == null ? 'channel was undefined.' : null;
+            errors = [typeError, textError, channelError].filter(function(element) {
+                return element !== null;
+            }).join(' ');
+            return console.log("Could not respond. " + errors);
+        }
+    })
+);
 
 slack.on('error', function(error) {
     console.log('error');
