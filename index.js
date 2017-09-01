@@ -1199,17 +1199,17 @@ function _getAccessToken(channelid) {
         return false;
     }
 
-    let getToken = axios.post('https://accounts.spotify.com/api/token', { data: { 'grant_type': 'client_credentials' }, headers: { 'Authorization': 'Basic ' + apiKey } }).then(function(response) {
-        return response.data.access_token;
-    });
-
-    // let getToken = urllibsync.request('https://accounts.spotify.com/api/token', {
-    //     method: "POST",
-    //     data: { 'grant_type': 'client_credentials' },
-    //     headers: { 'Authorization': 'Basic ' + apiKey }
+    // let getToken = axios.post('https://accounts.spotify.com/api/token', { data: { 'grant_type': 'client_credentials' }, headers: { 'Authorization': 'Basic ' + apiKey } }).then(function(response) {
+    //     return response.data.access_token;
     // });
-    // let tokendata = JSON.parse(getToken.data.toString());
-    // return tokendata.access_token;
+
+    let getToken = urllibsync.request('https://accounts.spotify.com/api/token', {
+        method: "POST",
+        data: { 'grant_type': 'client_credentials' },
+        headers: { 'Authorization': 'Basic ' + apiKey }
+    });
+    let tokendata = JSON.parse(getToken.data.toString());
+    return tokendata.access_token;
 }
 
 module.exports = function(number, locale) {
