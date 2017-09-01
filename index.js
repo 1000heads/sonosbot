@@ -547,27 +547,33 @@ function _help(input, channel) {
     '`sonos gongcheck` : How many gong votes there are currently, as well as who has GONGED.\n' +
     '`sonos vote` _exactSongTitle_ : Vote for a specific song title in the queue.\n' +
     '`sonos list` : list current queue\n' +
-    '------ ADMIN FUNCTIONS ------\n' +
-    '`sonos select` _number_ : select the track in list by position\n' +
-    '`sonos shuffle`: selects a track at random from the list\n' +
-    '`sonos status` : show current status of Sonos\n' +
-    '`sonos append` _text_ : Append a song to the previous playlist and start playing the same list again.\n' +
-    '`sonos volume` : view current volume\n' +
-    '`sonos flush` or 🚽 : flush the current queue\n' +
-    '`sonos volumeup` or :loud_sound: : increase volume by 10\n' +
-    '`sonos volumedown` or :sound: : decrease volume by 10\n' +
-    '`sonos setvolume` _devicename_ _volume_ : set volume of the device to the amount\n' +
-    '`sonos devices` : get the short names of the current devices\n' +
-    '`sonos play` : play track\n' +
-    '`sonos stop` or :raised_hand_with_fingers_splayed: : stop\n' +
-    '`sonos pause` : pause\n' +
-    '`sonos playpause` : resume after pause\n' +
-    '`sonos next` or `sonos skip` : play next track\n' +
-    '`sonos previous` : play previous track\n' +
-    '`sonos blacklist` : show users on blacklist\n' +
-    '`sonos blacklist add @username` : add `@username` to the blacklist\n' +
-    '`sonos blacklist del @username` : remove `@username` from the blacklist\n' +
-    '=====================\n'
+    '=====================\n';
+
+    if(channel.name === adminChannel) {
+        message +=
+        '------ ADMIN FUNCTIONS ------\n' +
+        '`sonos select` _number_ : select the track in list by position\n' +
+        '`sonos shuffle`: selects a track at random from the list\n' +
+        '`sonos status` : show current status of Sonos\n' +
+        '`sonos append` _text_ : Append a song to the previous playlist and start playing the same list again.\n' +
+        '`sonos volume` : view current volume\n' +
+        '`sonos flush` or 🚽 : flush the current queue\n' +
+        '`sonos volumeup` or :loud_sound: : increase volume by 10\n' +
+        '`sonos volumedown` or :sound: : decrease volume by 10\n' +
+        '`sonos setvolume` _devicename_ _volume_ : set volume of the device to the amount\n' +
+        '`sonos devices` : get the short names of the current devices\n' +
+        '`sonos play` : play track\n' +
+        '`sonos stop` or :raised_hand_with_fingers_splayed: : stop\n' +
+        '`sonos pause` : pause\n' +
+        '`sonos playpause` : resume after pause\n' +
+        '`sonos next` or `sonos skip` : play next track\n' +
+        '`sonos previous` : play previous track\n' +
+        '`sonos blacklist` : show users on blacklist\n' +
+        '`sonos blacklist add @username` : add `@username` to the blacklist\n' +
+        '`sonos blacklist del @username` : remove `@username` from the blacklist\n' +
+        '=====================\n';
+    }
+
     slack.sendMessage(message, channel.id);
 }
 
@@ -964,18 +970,42 @@ function _add(input, channel) {
                         // sonos.addSpotify(spid, function (err, res) {
 
                         sonos.addSpotifyQueue(spid, function (err, res) {
-                            console.log(res);
                             let message = '';
                             if(res) {
                                 let queueLength = res[0].FirstTrackNumberEnqueued;
                                 console.log('queueLength', queueLength);
-                                message = 'I have added "' + trackName + '" to the queue!\n'+albumImg+'\nPosition in queue is ' + queueLength;
+                                message = 'I have added "' + trackName + '" to the queue!\nPosition in queue is ' + queueLength-1;
                             } else {
                                 message = 'Error!';
                                 console.log(err);
                             }
-                            slack.sendMessage(message, channel.id)
+                            slack.sendMessage(message, channel.id);
+                            if(res) {
+                                // And finally..  lets start rocking...
+                                sonos.selectQueue(function (err, result) {
+                                    sonos.play(function (err, playing) {
+                                        console.log([err, playing])
+                                        if(playing) {
+                                            slack.sendMessage('Flushed old playlist...  Time to rock again!', channel.id);
+                                        }
+                                    });
+                                });
+                            }
                         });
+
+                        // sonos.addSpotifyQueue(spid, function (err, res) {
+                        //     console.log(res);
+                        //     let message = '';
+                        //     if(res) {
+                        //         let queueLength = res[0].FirstTrackNumberEnqueued;
+                        //         console.log('queueLength', queueLength);
+                        //         message = 'I have added "' + trackName + '" to the queue!\nPosition in queue is ' + queueLength;
+                        //     } else {
+                        //         message = 'Error!';
+                        //         console.log(err);
+                        //     }
+                        //     slack.sendMessage(message, channel.id)
+                        // });
                     // } else if (state === 'paused') {
                     //     slack.sendMessage("I'm frozen! Alive!", channel.id)
                     // } else if (state === 'transitioning') {
