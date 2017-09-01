@@ -1008,33 +1008,35 @@ function _search(input, channel) {
         }
     }
 
-    let getapi = urllibsync.request('https://api.spotify.com/v1/search?q=' + query + '&type=track&limit=' + searchLimit + '&market=' + market + '&access_token=' + accessToken);
-    let data = JSON.parse(getapi.data.toString());
-    console.log(data);
+    // let getapi = urllibsync.request('https://api.spotify.com/v1/search?q=' + query + '&type=track&limit=' + searchLimit + '&market=' + market + '&access_token=' + accessToken);
+    let getapi = axios.get('https://api.spotify.com/v1/search?q=' + query + '&type=track&limit=' + searchLimit + '&market=' + market + '&access_token=' + accessToken).then(function(response) {
+        let data = response.data;
+        console.log(data);
 
-    if(data.tracks && data.tracks.items && data.tracks.items.length > 0) {
-        let trackNames = [];
+        if(data.tracks && data.tracks.items && data.tracks.items.length > 0) {
+            let trackNames = [];
 
-        for(let i = 1; i <= data.tracks.items.length; i++) {
+            for(let i = 1; i <= data.tracks.items.length; i++) {
 
-            let spid = data.tracks.items[i-1].id;
-            let uri = data.tracks.items[i-1].uri;
-            let external_url = data.tracks.items[i-1].external_urls.spotify;
+                let spid = data.tracks.items[i-1].id;
+                let uri = data.tracks.items[i-1].uri;
+                let external_url = data.tracks.items[i-1].external_urls.spotify;
 
-            let albumImg = data.tracks.items[i-1].album.images[2].url;
-            let trackName = data.tracks.items[i-1].artists[0].name + ' - ' + data.tracks.items[i-1].name;
+                let albumImg = data.tracks.items[i-1].album.images[2].url;
+                let trackName = data.tracks.items[i-1].artists[0].name + ' - ' + data.tracks.items[i-1].name;
 
-            trackNames.push(trackName);
+                trackNames.push(trackName);
 
+            }
+
+            //Print the result...
+            let message = 'I found the following track(s):\n```\n' + trackNames.join('\n') + '\n```\nIf you want to play it, use the `add` command..\n';
+            slack.sendMessage(message, channel.id)
+
+        } else {
+            slack.sendMessage('Sorry could not find that track :frowning:', channel.id);
         }
-
-        //Print the result...
-        let message = 'I found the following track(s):\n```\n' + trackNames.join('\n') + '\n```\nIf you want to play it, use the `add` command..\n';
-        slack.sendMessage(message, channel.id)
-
-    } else {
-        slack.sendMessage('Sorry could not find that track :frowning:', channel.id);
-    }
+    }).catch((err) => slack.sendMessage('Sorry, could not add your track.', channel.id));
 }
 
 function _vote(text, channel, userName) {
