@@ -23,7 +23,7 @@ let devices = {};
 let searchLimit = 10;
 
 var gongCounter = 0;
-var gongLimit = 3;
+var gongLimit = 2;
 var gongLimitPerUser = 1;
 var gongScore = {};
 var gongMessage = [
@@ -760,7 +760,7 @@ function _currentTrack(channel, cb) {
             let psec = ''+track.position%60;
             psec = psec.length == 2 ? psec : '0'+psec;
 
-            let message = 'We´re currently listening to *' + track.artist + '* by *' + track.title + '* ('+pmin+':'+psec+'/'+fmin+':'+fsec+')';
+            let message = 'We´re currently listening to *' + track.title + '* by *' + track.artist + '* ('+pmin+':'+psec+'/'+fmin+':'+fsec+')';
             slack.sendMessage(message, channel.id);
         }
     });
