@@ -60,7 +60,8 @@ function startSlack() {
 }
 
 throng({
-    lifetime: Infinity
+    lifetime: Infinity,
+    workers: 1
   }, startSlack);
 
 slack.on('open', function() {
