@@ -1150,8 +1150,9 @@ function _getAccessToken(channelid) {
     //     headers: { 'Authorization': 'Basic ' + apiKey }
     // });
 
-    let tokendata = JSON.parse(getToken.data.toString());
-    return tokendata.access_token;
+    // let tokendata = JSON.parse(getToken.data.toString());
+    // return tokendata.access_token;
+    return '';
 }
 
 module.exports = function(number, locale) {
