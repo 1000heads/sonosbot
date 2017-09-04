@@ -37,10 +37,6 @@ var gongMessage = [
     "Booo!!! Please skip the traaaaaack!"
 ];
 
-let voteVictory = 3;
-let voteLimit = 1;
-let votes = {};
-
 let gongTrack = ""; // What track was a GONG called on
 
 const RtmClient = slackclient.RtmClient;
@@ -224,9 +220,6 @@ slack.on(RTM_EVENTS.MESSAGE, function(message) {
                 break;
                 case `${prefix} current`:
                     _currentTrack(channel);
-                break;
-                case `${prefix} vote`:
-                    _vote(text, channel, userName);
                 break;
                 case `${prefix} previous`:
                     _previous(input, channel);
@@ -545,7 +538,6 @@ function _help(input, channel) {
     '`sonos search` _text_ : search for a track, does NOT add it to the queue\n' +
     '`sonos gong` or 💩 : The current track is trash! Vote for skipping this track\n' +
     '`sonos gongcheck` : How many gong votes there are currently, as well as who has GONGED.\n' +
-    '`sonos vote` _exactSongTitle_ : Vote for a specific song title in the queue.\n' +
     '`sonos list` : list current queue\n' +
     '=====================\n';
 
@@ -1054,71 +1046,6 @@ function _search(input, channel) {
     }).catch((err) => slack.sendMessage('Sorry could not find that track :frowning:', channel.id));
 }
 
-function _vote(text, channel, userName) {
-    let trackName = text.substring(11);
-
-    //Decode any htmlentities as returned in the trackName
-    entities = new Entities();
-    trackName = entities.decode(trackName);
-
-    sonos.getQueue(function (err, result) {
-        if (err || !result) {
-            console.log(err)
-            slack.sendMessage('Couldn\'t fetch the queue', channel.id);
-        } else {
-            for(let i = 0; i < result.items.length; i++)
-            {
-                let item = result.items[i];
-                if(item['title'].toLowerCase() === trackName.toLowerCase()){
-                    if(trackName in votes)
-                    {
-                        let listOfVotes = votes[trackName]
-                        let votedTimes = 0
-                        for(let i = 0; i < listOfVotes.length; ++i)
-                        {
-                            if(listOfVotes[i] === userName)
-                            {
-                                votedTimes++;
-                            }
-                        }
-                        console.log(listOfVotes);
-
-                        if(votedTimes >= voteLimit)
-                        {
-                            slack.sendMessage("Voting so many times " + userName + "! DENIED!", channel.id)
-                            return
-                        } else {
-                            votes[trackName].push(userName)
-                            slack.sendMessage("Valid vote for " + trackName + " by " + userName + "!", channel.id)
-                            votedTimes++
-                        }
-
-                        if(listOfVotes.length >= voteVictory)
-                        {
-                            // Should play item
-                            slack.sendMessage("Vote passed! Will put " + trackName + " on top! Will reset votes for this track.", channel.id);
-                            delete votes[trackName];
-
-                            // Should play item
-                            _currentTrack(channel,
-                                function(error, track){
-                                    sonos.queueNext('3a4U9arGcc4ATa7shChhLQP0', function (err, res) {
-                                        console.log(err);
-                                    });
-                                }
-                            );
-                        }
-                    }else{
-                        votes[trackName] = [userName];
-                        slack.sendMessage("Valid vote for " + trackName + " by " + userName + "!", channel.id);
-                    }
-                    return
-                }
-            }
-        }
-    })
-}
-
 function _status(channel){
     if(channel.name !== adminChannel){
         console.log("Only admins are allowed to do this. Please ask nicely!")
@@ -1199,15 +1126,29 @@ function _getAccessToken(channelid) {
         return false;
     }
 
-    // let getToken = axios.post('https://accounts.spotify.com/api/token', { data: { 'grant_type': 'client_credentials' }, headers: { 'Authorization': 'Basic ' + apiKey } }).then(function(response) {
+    let getToken = axios({
+        method: 'post',
+        url: 'https://accounts.spotify.com/api/token',
+        data: {
+            grant_type: 'client_credentials'
+        },
+        headers: {
+            Authorization: 'Basic ' + apiKey
+        }
+    }).then((res) => {
+        return res.data.access_token;
+    });
+
+    // .post('https://accounts.spotify.com/api/token', { data: { 'grant_type': 'client_credentials' }, headers: { 'Authorization': 'Basic ' + apiKey } }).then(function(response) {
     //     return response.data.access_token;
     // });
 
-    let getToken = urllibsync.request('https://accounts.spotify.com/api/token', {
-        method: "POST",
-        data: { 'grant_type': 'client_credentials' },
-        headers: { 'Authorization': 'Basic ' + apiKey }
-    });
+    // let getToken = urllibsync.request('https://accounts.spotify.com/api/token', {
+    //     method: "POST",
+    //     data: { 'grant_type': 'client_credentials' },
+    //     headers: { 'Authorization': 'Basic ' + apiKey }
+    // });
+
     let tokendata = JSON.parse(getToken.data.toString());
     return tokendata.access_token;
 }
