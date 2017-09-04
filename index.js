@@ -1135,10 +1135,12 @@ function _getAccessToken(channelid) {
         headers: {
             Authorization: 'Basic ' + apiKey
         }
-    }).then((res) => {
-        console.log(res);
-        // return res.data.access_token;
-    });
+    })
+        .then((res) => {
+            console.log(res);
+            // return res.data.access_token;
+        })
+        .catch(err => console.log(err));
 
     // .post('https://accounts.spotify.com/api/token', { data: { 'grant_type': 'client_credentials' }, headers: { 'Authorization': 'Basic ' + apiKey } }).then(function(response) {
     //     return response.data.access_token;
