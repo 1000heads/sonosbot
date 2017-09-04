@@ -1128,7 +1128,9 @@ function _getAccessToken(channelid) {
 
     let getToken = axios.post('https://accounts.spotify.com/api/token',
         {
-            'grant_type': 'client_credentials'
+            data: {
+                'grant_type': 'client_credentials'
+            }
         },
         {
             headers: {
