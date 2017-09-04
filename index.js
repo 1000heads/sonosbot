@@ -1126,27 +1126,13 @@ function _getAccessToken(channelid) {
         return false;
     }
 
-    // let getToken = axios({
-    //     method: 'post',
-    //     url: 'https://accounts.spotify.com/api/token',
-    //     data: {
-    //         grant_type: 'client_credentials'
-    //     },
-    //     headers: {
-    //         Authorization: 'Basic ' + apiKey
-    //     }
-    // })
-    //     .then((res) => {
-    //         console.log(res);
-    //         // return res.data.access_token;
-    //     })
-    //     .catch(err => console.log(err));
-
     let getToken = axios.post('https://accounts.spotify.com/api/token',
         {
-            data: { 'grant_type': 'client_credentials' },
-            headers: { 'Authorization': 'Basic ' + apiKey, 'Content-Type': 'application/json' }
-        })
+            'grant_type': 'client_credentials'
+        }, { headers: {
+            'Authorization': 'Basic ' + apiKey, 'Content-Type': 'application/json'
+        }
+    })
         .then(function(response) {
             console.log(response);
             // return response.data.access_token;
