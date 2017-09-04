@@ -1142,7 +1142,11 @@ function _getAccessToken(channelid) {
     //     })
     //     .catch(err => console.log(err));
 
-    let getToken = axios.post('https://accounts.spotify.com/api/token', { data: { grant_type: 'client_credentials' }, headers: { Authorization: 'Basic ' + apiKey } })
+    let getToken = axios.post('https://accounts.spotify.com/api/token',
+        {
+            data: { 'grant_type': 'client_credentials' },
+            headers: { 'Authorization': 'Basic ' + apiKey, 'Content-Type': 'application/json' }
+        })
         .then(function(response) {
             console.log(response);
             // return response.data.access_token;
