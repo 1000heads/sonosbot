@@ -26,6 +26,7 @@
     "axios": "^0.16.2",
     "html-entities": "^1.2.0",
     "htmlencode": "0.0.4",
+    "lodash": "^4.17.4",
     "sonos": "^0.15.0",
     "throng": "^4.0.0",
     "underscore": "^1.8.3",

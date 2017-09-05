@@ -4,7 +4,7 @@ const urlencode = require('urlencode');
 const fs = require('fs');
 const Entities = require('html-entities').AllHtmlEntities;
 const slackclient = require('@slack/client');
-const _ = require('underscore');
+const _ = require('lodash');
 const throng = require('throng');
 const axios = require('axios');
 const config = require('./config');
@@ -37,7 +37,7 @@ var gongMessage = [
     "Booo!!! Please skip the traaaaaack!"
 ];
 
-let voteVictory = 3;
+let voteVictory = 1;
 let voteLimit = 1;
 let votes = {};
 
@@ -663,7 +663,7 @@ function _vote(text, channel, userName) {
     let entities = new Entities();
     let trackName = entities.decode(text.substring(11));
     let listOfVotes = [];
-    let votedSong;
+    let songs = [];
 
     sonos.getQueue(function (err, result) {
         if (err || !result) {
@@ -673,8 +673,9 @@ function _vote(text, channel, userName) {
             for(let i = 0; i < result.items.length; i++)
             {
                 item = result.items[i];
+                songs.push(item);
+
                 if(item['title'].toLowerCase() === trackName.toLowerCase()){
-                    votedSong = item;
                     if(trackName in votes) {
                         listOfVotes = votes[trackName];
                         let votedTimes = 0;
@@ -698,10 +699,13 @@ function _vote(text, channel, userName) {
                         }
 
                         if(listOfVotes.length === voteVictory) {
-
                             // Should play item
                             slack.sendMessage("Vote passed! Will put " + trackName + " on top! Will reset votes for this track.", channel.id);
                             delete votes[trackName];
+
+                            sonos.getQueue(function (err, result) {
+                                console.log(result);
+                            });
 
                             let getapi = axios.get('https://api.spotify.com/v1/search?q=' + trackName + '&type=track&limit=1&market=' + market + '&access_token=' + accessToken).then(function(response) {
                                 let data = response.data;
@@ -733,6 +737,50 @@ function _vote(text, channel, userName) {
                         votes[trackName] = [userName];
                         listOfVotes = votes[trackName];
                         slack.sendMessage("Valid vote for " + trackName + " by " + userName + "!", channel.id);
+
+                        if(listOfVotes.length === voteVictory) {
+                            // Should play item
+                            slack.sendMessage("Vote passed! Will put " + trackName + " on top! Will reset votes for this track.", channel.id);
+                            delete votes[trackName];
+
+                            // let updatedQueue = _.remove(songs, function(el) {
+                            //     return el.title !== trackName;
+                            // });
+
+                            // sonos.flush(function (err, flushed) {
+                            //     console.log([err, flushed])
+                            //     if(flushed) {
+                            //         updatedQueue.forEach((song) => {
+                            //             console.log(song);
+                            //             sonos.addSpotifyQueue(spid, function (err, res) {
+                            //                 console.log(res);
+                            //                 let message = '';
+                            //                 if(res) {
+                            //                     let queueLength = res[0].FirstTrackNumberEnqueued;
+                            //                     console.log('queueLength', queueLength);
+                            //                     message = 'I have added "' + trackName + '" to the queue!\nPosition in queue is ' + queueLength;
+                            //                 } else {
+                            //                     message = 'Error!';
+                            //                     console.log(err);
+                            //                 }
+                            //                 slack.sendMessage(message, channel.id);
+
+                            //                 if(res) {
+                            //                     // And finally..  lets start rocking...
+                            //                     sonos.selectQueue(function (err, result) {
+                            //                         sonos.play(function (err, playing) {
+                            //                             console.log([err, playing])
+                            //                             if(playing) {
+                            //                                 slack.sendMessage('Flushed old playlist...  Time to rock again!', channel.id);
+                            //                             }
+                            //                         });
+                            //                     });
+                            //                 }
+                            //             });
+                            //         });
+                            //     }
+                            // });
+                        }
                     }
 
                     return;
