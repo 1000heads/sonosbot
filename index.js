@@ -37,7 +37,7 @@ var gongMessage = [
     "Booo!!! Please skip the traaaaaack!"
 ];
 
-let voteVictory = 3;
+let voteVictory = 1;
 let voteLimit = 1;
 let votes = {};
 
