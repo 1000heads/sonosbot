@@ -185,6 +185,9 @@ slack.on(RTM_EVENTS.MESSAGE, function(message) {
                 case ':raised_hand_with_fingers_splayed:':
                     _stop(input, channel);
                 break;
+                case `${prefix} vote`:
+                    _vote(text, channel, userName);
+                break;
                 case `${prefix} flush`:
                 case ':toilet:':
                     _flush(input, channel);
@@ -542,6 +545,7 @@ function _help(input, channel) {
     '`sonos add` or :heavy_plus_sign: _text_ : Add song to the queue and start playing if idle.\n' +
     '`sonos current` : list current track\n' +
     '`sonos search` _text_ : search for a track, does NOT add it to the queue\n' +
+    '`sonos vote` _exactSongTitle_ : Vote for a specific song title in the queue.\n' +
     '`sonos gong` or 💩 : The current track is trash! Vote for skipping this track\n' +
     '`sonos gongcheck` : How many gong votes there are currently, as well as who has GONGED.\n' +
     '`sonos list` : list current queue\n' +
@@ -647,6 +651,72 @@ function _flush(input, channel) {
             slack.sendMessage('Ok.. clean slate..  Let´s make it better this time!!', channel.id);
         }
     });
+}
+
+function _vote(text, channel, userName) {
+    let trackName = text.substring(11);
+
+    //Decode any htmlentities as returned in the trackName
+    entities = new Entities();
+    trackName = entities.decode(trackName);
+
+    sonos.getQueue(function (err, result) {
+        if (err || !result) {
+            console.log(err)
+            slack.sendMessage('Couldn\'t fetch the queue', channel.id);
+        } else {
+            for(let i = 0; i < result.items.length; i++)
+            {
+                let item = result.items[i];
+                if(item['title'].toLowerCase() === trackName.toLowerCase()){
+                    if(trackName in votes)
+                    {
+                        let listOfVotes = votes[trackName]
+                        let votedTimes = 0
+                        for(let i = 0; i < listOfVotes.length; ++i)
+                        {
+                            if(listOfVotes[i] === userName)
+                            {
+                                votedTimes++;
+                            }
+                        }
+                        console.log(listOfVotes);
+
+                        if(votedTimes >= voteLimit)
+                        {
+                            slack.sendMessage("Voting so many times " + userName + "! DENIED!", channel.id)
+                            return
+                        } else {
+                            votes[trackName].push(userName)
+                            slack.sendMessage("Valid vote for " + trackName + " by " + userName + "!", channel.id)
+                            votedTimes++
+                        }
+
+                        if(listOfVotes.length >= voteVictory)
+                        {
+                            // Should play item
+                            slack.sendMessage("Vote passed! Will put " + trackName + " on top! Will reset votes for this track.", channel.id);
+                            delete votes[trackName];
+
+                            // Should play item
+                            _currentTrack(channel,
+                                function(error, track){
+                                    console.log(track);
+                                    // sonos.queueNext('3a4U9arGcc4ATa7shChhLQP0', function (err, res) {
+                                    //     console.log(err);
+                                    // });
+                                }
+                            );
+                        }
+                    } else {
+                        votes[trackName] = [userName];
+                        slack.sendMessage("Valid vote for " + trackName + " by " + userName + "!", channel.id);
+                    }
+                    return;
+                }
+            }
+        }
+    })
 }
 
 function _say(input, channel) {
