@@ -874,7 +874,7 @@ function _append(input, channel) {
                     });
                     } else if (state === 'playing') {
                         //Tell them to use add...
-                    slack.sendMessage("Already playing...  use add..", channel.id)
+                        slack.sendMessage("Already playing...  use add..", channel.id)
                     } else if (state === 'paused') {
                         slack.sendMessage("I'm frozen! Alive!", channel.id)
                     } else if (state === 'transitioning') {
@@ -915,58 +915,57 @@ function _add(input, channel) {
             let uri = data.tracks.items[0].uri;
             let external_url = data.tracks.items[0].external_urls.spotify;
 
-            console.log(spid);
-
             let albumImg = data.tracks.items[0].album.images[2].url;
             let trackName = data.tracks.items[0].artists[0].name + ' - ' + data.tracks.items[0].name;
-
-                        console.log(trackName);
 
             sonos.getCurrentState(function (err, state) {
                 if(err) {
                     console.log(err);
                 } else {
-                    // if (state === 'stopped') {
-                    //     // Ok, lets start again..  Flush old playlist
-                    //     sonos.flush(function (err, flushed) {
-                    //         console.log([err, flushed])
-                    //         if(flushed) {
-                    //             slack.sendMessage('Clean slate..  Let´s make it better this time!!', channel.id);
-                    //             //Then add the track to playlist...
+                    if (state === 'stopped') {
+                        // Ok, lets start again..  Flush old playlist
+                        sonos.flush(function (err, flushed) {
+                            console.log([err, flushed])
+                            if(flushed) {
+                                slack.sendMessage('Clean slate..  Let´s make it better this time!!', channel.id);
+                                //Then add the track to playlist...
 
-                    //             // Old version..  New is supposed to fix 500 problem...
-                    //             // sonos.addSpotifyQueue(spid, function (err, res) {
-                    //             // Alternate new version..
-                    //             sonos.addSpotify(spid, function (err, res) {
+                                // Old version..  New is supposed to fix 500 problem...
+                                // sonos.addSpotifyQueue(spid, function (err, res) {
+                                // Alternate new version..
+                                // sonos.addSpotify(spid, function (err, res) {
 
-                    //             // sonos.addSpotifyQueue(spid, function (err, res) {
-                    //                 let message = '';
-                    //                 if(res) {
-                    //                     let queueLength = res[0].FirstTrackNumberEnqueued;
-                    //                     console.log('queueLength', queueLength);
-                    //                     message = 'I have added "' + trackName + '" to the queue!\nPosition in queue is ' + queueLength-1;
-                    //                 } else {
-                    //                     message = 'Error!';
-                    //                     console.log(err);
-                    //                 }
-                    //                 slack.sendMessage(message, channel.id);
-                    //                 if(res) {
-                    //                     // And finally..  lets start rocking...
-                    //                     sonos.selectQueue(function (err, result) {
-                    //                         sonos.play(function (err, playing) {
-                    //                             console.log([err, playing])
-                    //                             if(playing) {
-                    //                                 slack.sendMessage('Flushed old playlist...  Time to rock again!', channel.id);
-                    //                             }
-                    //                         });
-                    //                     });
-                    //                 }
-                    //             });
-                    //         }
-                    //     });
-                    // } else if (state === 'playing') {
+                                sonos.addSpotifyQueue(spid, function (err, res) {
+                                    console.log(res);
+                                    let message = '';
+                                    if(res) {
+                                        let queueLength = res[0].FirstTrackNumberEnqueued;
+                                        console.log('queueLength', queueLength);
+                                        message = 'I have added "' + trackName + '" to the queue!\nPosition in queue is ' + queueLength;
+                                    } else {
+                                        message = 'Error!';
+                                        console.log(err);
+                                    }
+                                    slack.sendMessage(message, channel.id);
+
+                                    if(res) {
+                                        // And finally..  lets start rocking...
+                                        sonos.selectQueue(function (err, result) {
+                                            sonos.play(function (err, playing) {
+                                                console.log([err, playing])
+                                                if(playing) {
+                                                    slack.sendMessage('Flushed old playlist...  Time to rock again!', channel.id);
+                                                }
+                                            });
+                                        });
+                                    }
+                                });
+                            }
+                        });
+                    } else if (state === 'playing') {
                         // Add the track to playlist...
                         // // And finally..  lets start rocking...
+
                         // sonos.selectQueue(function (err, result) {
                         //     sonos.queue(spid, function (err, playing) {
                         //         console.log([err, playing])
@@ -975,11 +974,6 @@ function _add(input, channel) {
                         //         }
                         //     });
                         // });
-
-                        // Old version..  New is supposed to fix 500 problem...
-                        // sonos.addSpotifyQueue(spid, function (err, res) {
-                        // Alternate new version..
-                        // sonos.addSpotify(spid, function (err, res) {
 
                         sonos.addSpotifyQueue(spid, function (err, res) {
                             console.log(res);
@@ -992,26 +986,23 @@ function _add(input, channel) {
                                 message = 'Error!';
                                 console.log(err);
                             }
-                        slack.sendMessage(message, channel.id);
-                    });
-
-                    // } else if (state === 'paused') {
-                    //     slack.sendMessage("I'm frozen! Alive!", channel.id)
-                    // } else if (state === 'transitioning') {
-                    //     slack.sendMessage("Mayday, mayday! I'm sinking!!", channel.id)
-                    // } else if (state === 'no_media') {
-                    //     slack.sendMessage("Nothing to play, nothing to do. I'm rethinking my life", channel.id)
-                    // } else {
-                    //   slack.sendMessage("No freaking idea. What is this [" + state + "]?", channel.id)
-                    // }
+                            slack.sendMessage(message, channel.id);
+                        });
+                    } else if (state === 'paused') {
+                        slack.sendMessage("I'm frozen! Alive!", channel.id)
+                    } else if (state === 'transitioning') {
+                        slack.sendMessage("Mayday, mayday! I'm sinking!!", channel.id)
+                    } else if (state === 'no_media') {
+                        slack.sendMessage("Nothing to play, nothing to do. I'm rethinking my life", channel.id)
+                    } else {
+                      slack.sendMessage("No freaking idea. What is this [" + state + "]?", channel.id)
+                    }
                 }
             });
         } else {
             slack.sendMessage('Sorry could not find that track :frowning: Have your tried using *search* to find it?', channel.id);
         }
     }).catch((err) => slack.sendMessage('Sorry, could not add your track.', channel.id));
-
-    // let getapi = urllibsync.request('https://api.spotify.com/v1/search?q=' + query + '&type=track&limit=1&market=' + market + '&access_token=' + accessToken);
 }
 
 function _search(input, channel) {
