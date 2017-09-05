@@ -909,7 +909,9 @@ function _add(input, channel) {
     let getapi = axios.get('https://api.spotify.com/v1/search?q=' + query + '&type=track&limit=1&market=' + market + '&access_token=' + accessToken).then(function(response) {
         let data = response.data;
 
+        console.log(data.tracks, data.tracks.items, data.trakcs.items.length);
         if(data.tracks && data.tracks.items && data.tracks.items.length > 0) {
+
             let spid = data.tracks[0].id;
             let uri = data.tracks[0].uri;
             let external_url = data.tracks.items[0].external_urls.spotify;
