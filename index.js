@@ -661,6 +661,7 @@ function _vote(text, channel, userName) {
     trackName = entities.decode(trackName);
 
     sonos.getQueue(function (err, result) {
+        console.log('got q');
         if (err || !result) {
             console.log(err)
             slack.sendMessage('Couldn\'t fetch the queue', channel.id);
@@ -684,12 +685,12 @@ function _vote(text, channel, userName) {
 
                         if(votedTimes >= voteLimit)
                         {
-                            slack.sendMessage("Voting so many times " + userName + "! DENIED!", channel.id)
-                            return
+                            slack.sendMessage("Voting so many times " + userName + "! DENIED!", channel.id);
+                            return;
                         } else {
-                            votes[trackName].push(userName)
+                            votes[trackName].push(userName);
                             slack.sendMessage("Valid vote for " + trackName + " by " + userName + "!", channel.id)
-                            votedTimes++
+                            votedTimes++;
                         }
 
                         if(listOfVotes.length >= voteVictory)
