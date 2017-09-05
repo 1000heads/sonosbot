@@ -932,9 +932,9 @@ function _add(input, channel) {
                                 // Old version..  New is supposed to fix 500 problem...
                                 // sonos.addSpotifyQueue(spid, function (err, res) {
                                 // Alternate new version..
-                                // sonos.addSpotify(spid, function (err, res) {
+                                sonos.addSpotify(spid, function (err, res) {
 
-                                sonos.addSpotifyQueue(spid, function (err, res) {
+                                // sonos.addSpotifyQueue(spid, function (err, res) {
                                     let message = '';
                                     if(res) {
                                         let queueLength = res[0].FirstTrackNumberEnqueued;
@@ -974,9 +974,9 @@ function _add(input, channel) {
                         // Old version..  New is supposed to fix 500 problem...
                         // sonos.addSpotifyQueue(spid, function (err, res) {
                         // Alternate new version..
-                        // sonos.addSpotify(spid, function (err, res) {
+                        sonos.addSpotify(spid, function (err, res) {
 
-                        sonos.addSpotifyQueue(spid, function (err, res) {
+                        // sonos.addSpotifyQueue(spid, function (err, res) {
                             console.log(res);
                             let message = '';
                             if(res) {
