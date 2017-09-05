@@ -37,7 +37,7 @@ var gongMessage = [
     "Booo!!! Please skip the traaaaaack!"
 ];
 
-let voteVictory = 1;
+let voteVictory = 3;
 let voteLimit = 1;
 let votes = {};
 
@@ -654,26 +654,31 @@ function _flush(input, channel) {
 }
 
 function _vote(text, channel, userName) {
-    let trackName = text.substring(11);
+	let accessToken = _getAccessToken(channel.id);
+	if (!accessToken) {
+		return false;
+    }
 
     //Decode any htmlentities as returned in the trackName
-    entities = new Entities();
-    trackName = entities.decode(trackName);
+    let entities = new Entities();
+    let trackName = entities.decode(text.substring(11));
+    let listOfVotes = [];
+    let votedSong;
 
     sonos.getQueue(function (err, result) {
-        console.log('got q');
         if (err || !result) {
             console.log(err)
             slack.sendMessage('Couldn\'t fetch the queue', channel.id);
         } else {
             for(let i = 0; i < result.items.length; i++)
             {
-                let item = result.items[i];
+                item = result.items[i];
                 if(item['title'].toLowerCase() === trackName.toLowerCase()){
-                    if(trackName in votes)
-                    {
-                        let listOfVotes = votes[trackName]
-                        let votedTimes = 0
+                    votedSong = item;
+                    if(trackName in votes) {
+                        listOfVotes = votes[trackName];
+                        let votedTimes = 0;
+
                         for(let i = 0; i < listOfVotes.length; ++i)
                         {
                             if(listOfVotes[i] === userName)
@@ -681,7 +686,6 @@ function _vote(text, channel, userName) {
                                 votedTimes++;
                             }
                         }
-                        console.log(listOfVotes);
 
                         if(votedTimes >= voteLimit)
                         {
@@ -693,26 +697,44 @@ function _vote(text, channel, userName) {
                             votedTimes++;
                         }
 
-                        if(listOfVotes.length >= voteVictory)
-                        {
+                        if(listOfVotes.length === voteVictory) {
+
                             // Should play item
                             slack.sendMessage("Vote passed! Will put " + trackName + " on top! Will reset votes for this track.", channel.id);
                             delete votes[trackName];
 
-                            // Should play item
-                            _currentTrack(channel,
-                                function(error, track){
-                                    console.log(track);
-                                    // sonos.queueNext('3a4U9arGcc4ATa7shChhLQP0', function (err, res) {
-                                    //     console.log(err);
-                                    // });
+                            let getapi = axios.get('https://api.spotify.com/v1/search?q=' + trackName + '&type=track&limit=1&market=' + market + '&access_token=' + accessToken).then(function(response) {
+                                let data = response.data;
+
+                                if(data.tracks && data.tracks.items && data.tracks.items.length > 0) {
+
+                                    let spid = data.tracks.items[0].id;
+                                    let uri = data.tracks.items[0].uri;
+                                    let external_url = data.tracks.items[0].external_urls.spotify;
+
+                                    let albumImg = data.tracks.items[0].album.images[2].url;
+                                    let trackName = data.tracks.items[0].artists[0].name + ' - ' + data.tracks.items[0].name;
+
+                                    sonos.addSpotifyQueue(spid, function (err, res) {
+                                        console.log(res);
+                                        let message = '';
+                                        if(res) {
+                                            let queueLength = res[0].FirstTrackNumberEnqueued;
+                                            console.log('queueLength', queueLength);
+                                        } else {
+                                            slack.sendMessage("Error", channel.id);
+                                            console.log(err);
+                                        }
+                                    });
                                 }
-                            );
+                            });
                         }
                     } else {
                         votes[trackName] = [userName];
+                        listOfVotes = votes[trackName];
                         slack.sendMessage("Valid vote for " + trackName + " by " + userName + "!", channel.id);
                     }
+
                     return;
                 }
             }
@@ -1000,12 +1022,6 @@ function _add(input, channel) {
                             if(flushed) {
                                 slack.sendMessage('Clean slate..  Let´s make it better this time!!', channel.id);
                                 //Then add the track to playlist...
-
-                                // Old version..  New is supposed to fix 500 problem...
-                                // sonos.addSpotifyQueue(spid, function (err, res) {
-                                // Alternate new version..
-                                // sonos.addSpotify(spid, function (err, res) {
-
                                 sonos.addSpotifyQueue(spid, function (err, res) {
                                     console.log(res);
                                     let message = '';
@@ -1036,16 +1052,6 @@ function _add(input, channel) {
                     } else if (state === 'playing') {
                         // Add the track to playlist...
                         // // And finally..  lets start rocking...
-
-                        // sonos.selectQueue(function (err, result) {
-                        //     sonos.queue(spid, function (err, playing) {
-                        //         console.log([err, playing])
-                        //         if(playing) {
-                        //             slack.sendMessage('Flushed old playlist...  Time to rock again!', channel.id);
-                        //         }
-                        //     });
-                        // });
-
                         sonos.addSpotifyQueue(spid, function (err, res) {
                             console.log(res);
                             let message = '';
@@ -1107,7 +1113,6 @@ function _search(input, channel) {
                 let trackName = data.tracks.items[i-1].artists[0].name + ' - ' + data.tracks.items[i-1].name;
 
                 trackNames.push(trackName);
-
             }
 
             //Print the result...
