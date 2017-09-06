@@ -25,7 +25,7 @@ let devices = {};
 let searchLimit = 5;
 
 var gongCounter = 0;
-var gongLimit = 2;
+var gongLimit = 3;
 var gongLimitPerUser = 1;
 var gongScore = {};
 var gongMessage = [
@@ -37,7 +37,7 @@ var gongMessage = [
     "Booo!!! Please skip the traaaaaack!"
 ];
 
-let voteVictory = 1;
+let voteVictory = 3;
 let voteLimit = 1;
 let votes = {};
 
@@ -703,35 +703,37 @@ function _vote(text, channel, userName) {
                             slack.sendMessage("Vote passed! Will put " + trackName + " on top! Will reset votes for this track.", channel.id);
                             delete votes[trackName];
 
-                            sonos.getQueue(function (err, result) {
-                                console.log(result);
-                            });
 
-                            let getapi = axios.get('https://api.spotify.com/v1/search?q=' + trackName + '&type=track&limit=1&market=' + market + '&access_token=' + accessToken).then(function(response) {
-                                let data = response.data;
 
-                                if(data.tracks && data.tracks.items && data.tracks.items.length > 0) {
+                            // sonos.getQueue(function (err, result) {
+                            //     console.log(result);
+                            // });
 
-                                    let spid = data.tracks.items[0].id;
-                                    let uri = data.tracks.items[0].uri;
-                                    let external_url = data.tracks.items[0].external_urls.spotify;
+                            // let getapi = axios.get('https://api.spotify.com/v1/search?q=' + trackName + '&type=track&limit=1&market=' + market + '&access_token=' + accessToken).then(function(response) {
+                            //     let data = response.data;
 
-                                    let albumImg = data.tracks.items[0].album.images[2].url;
-                                    let trackName = data.tracks.items[0].artists[0].name + ' - ' + data.tracks.items[0].name;
+                            //     if(data.tracks && data.tracks.items && data.tracks.items.length > 0) {
 
-                                    sonos.addSpotifyQueue(spid, function (err, res) {
-                                        console.log(res);
-                                        let message = '';
-                                        if(res) {
-                                            let queueLength = res[0].FirstTrackNumberEnqueued;
-                                            console.log('queueLength', queueLength);
-                                        } else {
-                                            slack.sendMessage("Error", channel.id);
-                                            console.log(err);
-                                        }
-                                    });
-                                }
-                            });
+                            //         let spid = data.tracks.items[0].id;
+                            //         let uri = data.tracks.items[0].uri;
+                            //         let external_url = data.tracks.items[0].external_urls.spotify;
+
+                            //         let albumImg = data.tracks.items[0].album.images[2].url;
+                            //         let trackName = data.tracks.items[0].artists[0].name + ' - ' + data.tracks.items[0].name;
+
+                            //         sonos.addSpotifyQueue(spid, function (err, res) {
+                            //             console.log(res);
+                            //             let message = '';
+                            //             if(res) {
+                            //                 let queueLength = res[0].FirstTrackNumberEnqueued;
+                            //                 console.log('queueLength', queueLength);
+                            //             } else {
+                            //                 slack.sendMessage("Error", channel.id);
+                            //                 console.log(err);
+                            //             }
+                            //         });
+                            //     }
+                            // });
                         }
                     } else {
                         votes[trackName] = [userName];
