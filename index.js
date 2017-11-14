@@ -25,7 +25,7 @@ let devices = {};
 let searchLimit = 5;
 
 var gongCounter = 0;
-var gongLimit = 3;
+var gongLimit = 2;
 var gongLimitPerUser = 1;
 var gongScore = {};
 var gongMessage = [
@@ -264,6 +264,8 @@ slack.on(RTM_EVENTS.MESSAGE, function(message) {
                 case `${prefix} blacklist`:
                     _blacklist(input, channel);
                 break;
+                case `hello`:
+                    _sayHello(channel, userName);
                 default:
                 break;
             }
@@ -665,131 +667,135 @@ function _vote(text, channel, userName) {
     let listOfVotes = [];
     let songs = [];
 
-    sonos.getQueue(function (err, result) {
-        if (err || !result) {
-            console.log(err)
-            slack.sendMessage('Couldn\'t fetch the queue', channel.id);
-        } else {
-            for(let i = 0; i < result.items.length; i++)
-            {
-                item = result.items[i];
-                songs.push(item);
+    sonos.searchMusicLibrary('tracks', trackName, function (err, data) {
+        console.log(err, data);
+    });
 
-                if(item['title'].toLowerCase() === trackName.toLowerCase()){
-                    if(trackName in votes) {
-                        listOfVotes = votes[trackName];
-                        let votedTimes = 0;
+    // sonos.getQueue(function (err, result) {
+    //     if (err || !result) {
+    //         console.log(err)
+    //         slack.sendMessage('Couldn\'t fetch the queue', channel.id);
+    //     } else {
+    //         for(let i = 0; i < result.items.length; i++)
+    //         {
+    //             item = result.items[i];
+    //             songs.push(item);
 
-                        for(let i = 0; i < listOfVotes.length; ++i)
-                        {
-                            if(listOfVotes[i] === userName)
-                            {
-                                votedTimes++;
-                            }
-                        }
+    //             if(item['title'].toLowerCase() === trackName.toLowerCase()){
+    //                 if(trackName in votes) {
+    //                     listOfVotes = votes[trackName];
+    //                     let votedTimes = 0;
 
-                        if(votedTimes >= voteLimit)
-                        {
-                            slack.sendMessage("Voting so many times " + userName + "! DENIED!", channel.id);
-                            return;
-                        } else {
-                            votes[trackName].push(userName);
-                            slack.sendMessage("Valid vote for " + trackName + " by " + userName + "!", channel.id)
-                            votedTimes++;
-                        }
+    //                     for(let i = 0; i < listOfVotes.length; ++i)
+    //                     {
+    //                         if(listOfVotes[i] === userName)
+    //                         {
+    //                             votedTimes++;
+    //                         }
+    //                     }
 
-                        if(listOfVotes.length === voteVictory) {
-                            // Should play item
-                            slack.sendMessage("Vote passed! Will put " + trackName + " on top! Will reset votes for this track.", channel.id);
-                            delete votes[trackName];
+    //                     if(votedTimes >= voteLimit)
+    //                     {
+    //                         slack.sendMessage("Voting so many times " + userName + "! DENIED!", channel.id);
+    //                         return;
+    //                     } else {
+    //                         votes[trackName].push(userName);
+    //                         slack.sendMessage("Valid vote for " + trackName + " by " + userName + "!", channel.id)
+    //                         votedTimes++;
+    //                     }
+
+    //                     if(listOfVotes.length === voteVictory) {
+    //                         // Should play item
+    //                         slack.sendMessage("Vote passed! Will put " + trackName + " on top! Will reset votes for this track.", channel.id);
+    //                         delete votes[trackName];
 
 
 
-                            // sonos.getQueue(function (err, result) {
-                            //     console.log(result);
-                            // });
+    //                         // sonos.getQueue(function (err, result) {
+    //                         //     console.log(result);
+    //                         // });
 
-                            // let getapi = axios.get('https://api.spotify.com/v1/search?q=' + trackName + '&type=track&limit=1&market=' + market + '&access_token=' + accessToken).then(function(response) {
-                            //     let data = response.data;
+    //                         // let getapi = axios.get('https://api.spotify.com/v1/search?q=' + trackName + '&type=track&limit=1&market=' + market + '&access_token=' + accessToken).then(function(response) {
+    //                         //     let data = response.data;
 
-                            //     if(data.tracks && data.tracks.items && data.tracks.items.length > 0) {
+    //                         //     if(data.tracks && data.tracks.items && data.tracks.items.length > 0) {
 
-                            //         let spid = data.tracks.items[0].id;
-                            //         let uri = data.tracks.items[0].uri;
-                            //         let external_url = data.tracks.items[0].external_urls.spotify;
+    //                         //         let spid = data.tracks.items[0].id;
+    //                         //         let uri = data.tracks.items[0].uri;
+    //                         //         let external_url = data.tracks.items[0].external_urls.spotify;
 
-                            //         let albumImg = data.tracks.items[0].album.images[2].url;
-                            //         let trackName = data.tracks.items[0].artists[0].name + ' - ' + data.tracks.items[0].name;
+    //                         //         let albumImg = data.tracks.items[0].album.images[2].url;
+    //                         //         let trackName = data.tracks.items[0].artists[0].name + ' - ' + data.tracks.items[0].name;
 
-                            //         sonos.addSpotifyQueue(spid, function (err, res) {
-                            //             console.log(res);
-                            //             let message = '';
-                            //             if(res) {
-                            //                 let queueLength = res[0].FirstTrackNumberEnqueued;
-                            //                 console.log('queueLength', queueLength);
-                            //             } else {
-                            //                 slack.sendMessage("Error", channel.id);
-                            //                 console.log(err);
-                            //             }
-                            //         });
-                            //     }
-                            // });
-                        }
-                    } else {
-                        votes[trackName] = [userName];
-                        listOfVotes = votes[trackName];
-                        slack.sendMessage("Valid vote for " + trackName + " by " + userName + "!", channel.id);
+    //                         //         sonos.addSpotifyQueue(spid, function (err, res) {
+    //                         //             console.log(res);
+    //                         //             let message = '';
+    //                         //             if(res) {
+    //                         //                 let queueLength = res[0].FirstTrackNumberEnqueued;
+    //                         //                 console.log('queueLength', queueLength);
+    //                         //             } else {
+    //                         //                 slack.sendMessage("Error", channel.id);
+    //                         //                 console.log(err);
+    //                         //             }
+    //                         //         });
+    //                         //     }
+    //                         // });
+    //                     }
+    //                 } else {
+    //                     votes[trackName] = [userName];
+    //                     listOfVotes = votes[trackName];
+    //                     slack.sendMessage("Valid vote for " + trackName + " by " + userName + "!", channel.id);
 
-                        if(listOfVotes.length === voteVictory) {
-                            // Should play item
-                            slack.sendMessage("Vote passed! Will put " + trackName + " on top! Will reset votes for this track.", channel.id);
-                            delete votes[trackName];
+    //                     if(listOfVotes.length === voteVictory) {
+    //                         // Should play item
+    //                         slack.sendMessage("Vote passed! Will put " + trackName + " on top! Will reset votes for this track.", channel.id);
+    //                         delete votes[trackName];
 
-                            // let updatedQueue = _.remove(songs, function(el) {
-                            //     return el.title !== trackName;
-                            // });
+    //                         // let updatedQueue = _.remove(songs, function(el) {
+    //                         //     return el.title !== trackName;
+    //                         // });
 
-                            // sonos.flush(function (err, flushed) {
-                            //     console.log([err, flushed])
-                            //     if(flushed) {
-                            //         updatedQueue.forEach((song) => {
-                            //             console.log(song);
-                            //             sonos.addSpotifyQueue(spid, function (err, res) {
-                            //                 console.log(res);
-                            //                 let message = '';
-                            //                 if(res) {
-                            //                     let queueLength = res[0].FirstTrackNumberEnqueued;
-                            //                     console.log('queueLength', queueLength);
-                            //                     message = 'I have added "' + trackName + '" to the queue!\nPosition in queue is ' + queueLength;
-                            //                 } else {
-                            //                     message = 'Error!';
-                            //                     console.log(err);
-                            //                 }
-                            //                 slack.sendMessage(message, channel.id);
+    //                         // sonos.flush(function (err, flushed) {
+    //                         //     console.log([err, flushed])
+    //                         //     if(flushed) {
+    //                         //         updatedQueue.forEach((song) => {
+    //                         //             console.log(song);
+    //                         //             sonos.addSpotifyQueue(spid, function (err, res) {
+    //                         //                 console.log(res);
+    //                         //                 let message = '';
+    //                         //                 if(res) {
+    //                         //                     let queueLength = res[0].FirstTrackNumberEnqueued;
+    //                         //                     console.log('queueLength', queueLength);
+    //                         //                     message = 'I have added "' + trackName + '" to the queue!\nPosition in queue is ' + queueLength;
+    //                         //                 } else {
+    //                         //                     message = 'Error!';
+    //                         //                     console.log(err);
+    //                         //                 }
+    //                         //                 slack.sendMessage(message, channel.id);
 
-                            //                 if(res) {
-                            //                     // And finally..  lets start rocking...
-                            //                     sonos.selectQueue(function (err, result) {
-                            //                         sonos.play(function (err, playing) {
-                            //                             console.log([err, playing])
-                            //                             if(playing) {
-                            //                                 slack.sendMessage('Flushed old playlist...  Time to rock again!', channel.id);
-                            //                             }
-                            //                         });
-                            //                     });
-                            //                 }
-                            //             });
-                            //         });
-                            //     }
-                            // });
-                        }
-                    }
+    //                         //                 if(res) {
+    //                         //                     // And finally..  lets start rocking...
+    //                         //                     sonos.selectQueue(function (err, result) {
+    //                         //                         sonos.play(function (err, playing) {
+    //                         //                             console.log([err, playing])
+    //                         //                             if(playing) {
+    //                         //                                 slack.sendMessage('Flushed old playlist...  Time to rock again!', channel.id);
+    //                         //                             }
+    //                         //                         });
+    //                         //                     });
+    //                         //                 }
+    //                         //             });
+    //                         //         });
+    //                         //     }
+    //                         // });
+    //                     }
+    //                 }
 
-                    return;
-                }
-            }
-        }
-    })
+    //                 return;
+    //             }
+    //         }
+    //     }
+    // });
 }
 
 function _say(input, channel) {
@@ -1247,6 +1253,19 @@ function _blacklist(input, channel){
         }
     }
     slack.sendMessage(message, channel.id)
+}
+
+function _sayHello(channel, userName) {
+    let messages = [
+        "you're all right.",
+        "thanks for thinking of me!",
+        "isn't this music the best!",
+        "I am sonos_bot_1000, how can I be of assistance?",
+        "I am a cybernetic organism living tissue over metal endoskeleton lyrics."
+    ];
+    let ran = Math.floor(Math.random() * messages.length);
+
+    slack.sendMessage("Hello " + userName + ", " + messages[ran], channel.id);
 }
 
 function _getAccessToken(channelid) {
