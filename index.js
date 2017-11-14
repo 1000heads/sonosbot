@@ -1261,7 +1261,7 @@ function _sayHello(channel, userName) {
         "thanks for thinking of me!",
         "isn't this music the best!",
         "I am sonos_bot_1000, how can I be of assistance?",
-        "I am a cybernetic organism living tissue over metal endoskeleton lyrics."
+        "I am a cybernetic organism, living tissue over metal endoskeleton."
     ];
     let ran = Math.floor(Math.random() * messages.length);
 
