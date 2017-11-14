@@ -1257,7 +1257,7 @@ function _blacklist(input, channel){
 
 function _sayHello(channel, userName) {
     let messages = [
-        "you're all right.",
+        "you're alright.",
         "thanks for thinking of me!",
         "isn't this music the best!",
         "I am sonos_bot_1000, how can I be of assistance?",
