@@ -87,7 +87,6 @@ https://github.com/htilly/zenmusic/wiki
 **KnownBugs**
 
 * Validate add / unique track doesn´t work. I.e - You can add same track 10 times in a row.
-* Vote does not move track in queue.
 
 **ToDo**
 
@@ -97,33 +96,11 @@ https://github.com/htilly/zenmusic/wiki
 * Add spotify playlist
 * Vote: When voting for a song, put it in top of the queue. Queue is sorted based upon the number of votes.
 * A vote shall not automatically skip to the next track. It should just put it higher up the queue.
-* Backend DB
-* Text-to-speech.
 * Now playing. Announce when starting a new song.
 * When asking for "Stat" show most played songs and most active users.
-* When local playlist is empty -> fallback and start playing "$playlist", i.e. Spotify topp 100.
+* When local playlist is empty -> fallback and start playing "$playlist", i.e. Spotify top 100.
 * Limit consecutive song additions by non-admin
 * Restrict songs already in the queue
 * Delete range of songs from queue
 * Vote to flush entire queue
 * Implement some code-testing
-
-**DONE**
-
-* Added gongcheck - Thanks to "Warren Harding"
-* Added blacklist function. Enter usernames in "blacklist.txt".
-* Updated 'node-sonos' with getQueue and addSpotify. See: https://github.com/bencevans/node-sonos/commit/bfb995610c8aa20bda09e370b0f5d31ba0caa6a0
-* Added new function, search.
-* Added new function, Append. Reuse the old queue and add new track to the end of it.
-* Admin: Delete entire queue.
-* Regularly delete the entries from the queue when the song has been played.
-   * When adding a new track, do the following logic:
-        * Check "status". (fixed.. sort of..)
-        * If "playing", do a "list". Delete all songs in the queue with lower number than the current track. Then add song to queue.
-        * If "sleep" clear queue, add song to queue and do "play".
-* Add clear-queue functionality.
-* Fix queue function.
-* Fix GONG function. If X Gongs within X sec then next.
-* Admin commands from i.e."swe-music-admin".
-* Vote - If +1 in slack then move in queue. (sort of)
-* Ask "what is playing".
