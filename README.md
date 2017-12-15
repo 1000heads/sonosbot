@@ -3,17 +3,13 @@
 # sonosbot based on zenmusic
 **Slack / Sonos / Spotify / Node.js - Control Sonos through #Slack**
 
-*Screenshot*
-
-![ScreenShot](http://raw.github.com/htilly/zenmusic/master/doc/images/Screenshot.png)
-
-
+Forked by 1000heads from https://github.com/htilly/zenmusic
 
 **What is it?**
 
 Quick hack created during one of Schibsted Swedens hackdays by staff from Centralen.
 It´s a #slack-bot that control Sonos (and spotify). Highly democratic bot :)
-Uses https://github.com/bencevans/node-sonos to controll Sonos.
+Uses https://github.com/bencevans/node-sonos to control Sonos.
 
 **What do I need in order to get it to work?**
 
