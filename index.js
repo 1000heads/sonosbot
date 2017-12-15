@@ -185,8 +185,6 @@ slack.on(RTM_EVENTS.MESSAGE, function(message) {
                 case ':raised_hand_with_fingers_splayed:':
                     _stop(input, channel);
                 break;
-                case `${prefix} vote`:
-                    _vote(text, channel, userName);
                 break;
                 case `${prefix} flush`:
                 case ':toilet:':
@@ -655,149 +653,6 @@ function _flush(input, channel) {
     });
 }
 
-function _vote(text, channel, userName) {
-	let accessToken = _getAccessToken(channel.id);
-	if (!accessToken) {
-		return false;
-    }
-
-    //Decode any htmlentities as returned in the trackName
-    let entities = new Entities();
-    let trackName = entities.decode(text.substring(11));
-    let listOfVotes = [];
-    let songs = [];
-
-    sonos.searchMusicLibrary('tracks', trackName, function (err, data) {
-        console.log(err, data);
-    });
-
-    // sonos.getQueue(function (err, result) {
-    //     if (err || !result) {
-    //         console.log(err)
-    //         slack.sendMessage('Couldn\'t fetch the queue', channel.id);
-    //     } else {
-    //         for(let i = 0; i < result.items.length; i++)
-    //         {
-    //             item = result.items[i];
-    //             songs.push(item);
-
-    //             if(item['title'].toLowerCase() === trackName.toLowerCase()){
-    //                 if(trackName in votes) {
-    //                     listOfVotes = votes[trackName];
-    //                     let votedTimes = 0;
-
-    //                     for(let i = 0; i < listOfVotes.length; ++i)
-    //                     {
-    //                         if(listOfVotes[i] === userName)
-    //                         {
-    //                             votedTimes++;
-    //                         }
-    //                     }
-
-    //                     if(votedTimes >= voteLimit)
-    //                     {
-    //                         slack.sendMessage("Voting so many times " + userName + "! DENIED!", channel.id);
-    //                         return;
-    //                     } else {
-    //                         votes[trackName].push(userName);
-    //                         slack.sendMessage("Valid vote for " + trackName + " by " + userName + "!", channel.id)
-    //                         votedTimes++;
-    //                     }
-
-    //                     if(listOfVotes.length === voteVictory) {
-    //                         // Should play item
-    //                         slack.sendMessage("Vote passed! Will put " + trackName + " on top! Will reset votes for this track.", channel.id);
-    //                         delete votes[trackName];
-
-
-
-    //                         // sonos.getQueue(function (err, result) {
-    //                         //     console.log(result);
-    //                         // });
-
-    //                         // let getapi = axios.get('https://api.spotify.com/v1/search?q=' + trackName + '&type=track&limit=1&market=' + market + '&access_token=' + accessToken).then(function(response) {
-    //                         //     let data = response.data;
-
-    //                         //     if(data.tracks && data.tracks.items && data.tracks.items.length > 0) {
-
-    //                         //         let spid = data.tracks.items[0].id;
-    //                         //         let uri = data.tracks.items[0].uri;
-    //                         //         let external_url = data.tracks.items[0].external_urls.spotify;
-
-    //                         //         let albumImg = data.tracks.items[0].album.images[2].url;
-    //                         //         let trackName = data.tracks.items[0].artists[0].name + ' - ' + data.tracks.items[0].name;
-
-    //                         //         sonos.addSpotifyQueue(spid, function (err, res) {
-    //                         //             console.log(res);
-    //                         //             let message = '';
-    //                         //             if(res) {
-    //                         //                 let queueLength = res[0].FirstTrackNumberEnqueued;
-    //                         //                 console.log('queueLength', queueLength);
-    //                         //             } else {
-    //                         //                 slack.sendMessage("Error", channel.id);
-    //                         //                 console.log(err);
-    //                         //             }
-    //                         //         });
-    //                         //     }
-    //                         // });
-    //                     }
-    //                 } else {
-    //                     votes[trackName] = [userName];
-    //                     listOfVotes = votes[trackName];
-    //                     slack.sendMessage("Valid vote for " + trackName + " by " + userName + "!", channel.id);
-
-    //                     if(listOfVotes.length === voteVictory) {
-    //                         // Should play item
-    //                         slack.sendMessage("Vote passed! Will put " + trackName + " on top! Will reset votes for this track.", channel.id);
-    //                         delete votes[trackName];
-
-    //                         // let updatedQueue = _.remove(songs, function(el) {
-    //                         //     return el.title !== trackName;
-    //                         // });
-
-    //                         // sonos.flush(function (err, flushed) {
-    //                         //     console.log([err, flushed])
-    //                         //     if(flushed) {
-    //                         //         updatedQueue.forEach((song) => {
-    //                         //             console.log(song);
-    //                         //             sonos.addSpotifyQueue(spid, function (err, res) {
-    //                         //                 console.log(res);
-    //                         //                 let message = '';
-    //                         //                 if(res) {
-    //                         //                     let queueLength = res[0].FirstTrackNumberEnqueued;
-    //                         //                     console.log('queueLength', queueLength);
-    //                         //                     message = 'I have added "' + trackName + '" to the queue!\nPosition in queue is ' + queueLength;
-    //                         //                 } else {
-    //                         //                     message = 'Error!';
-    //                         //                     console.log(err);
-    //                         //                 }
-    //                         //                 slack.sendMessage(message, channel.id);
-
-    //                         //                 if(res) {
-    //                         //                     // And finally..  lets start rocking...
-    //                         //                     sonos.selectQueue(function (err, result) {
-    //                         //                         sonos.play(function (err, playing) {
-    //                         //                             console.log([err, playing])
-    //                         //                             if(playing) {
-    //                         //                                 slack.sendMessage('Flushed old playlist...  Time to rock again!', channel.id);
-    //                         //                             }
-    //                         //                         });
-    //                         //                     });
-    //                         //                 }
-    //                         //             });
-    //                         //         });
-    //                         //     }
-    //                         // });
-    //                     }
-    //                 }
-
-    //                 return;
-    //             }
-    //         }
-    //     }
-    // });
-}
-
 function _say(input, channel) {
     let text = input[1];
     // Replace all spaces with a _ because Sonos doesn't support spaces
@@ -975,7 +830,6 @@ function _append(input, channel) {
         }
     }
 
-    // let getapi = urllibsync.request('https://api.spotify.com/v1/search?q=' + query + '&type=track&limit=3&market=' + market + '&access_token=' + accessToken);
     let getapi = axios.get('https://api.spotify.com/v1/search?q=' + query + '&type=track&limit=3&market=' + market + '&access_token=' + accessToken).then(function(response) {
         if(data.tracks.items && data.tracks.items.length > 0) {
             let spid = data.tracks.items[0].id;
